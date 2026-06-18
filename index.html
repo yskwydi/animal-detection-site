@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>スマホ × AWS 次世代トレイルカメラ — 技術提案 ＆ PoC設計</title>
+<meta name="description" content="余った古いAndroidスマホとAmazon Bedrockで専用トレイルカメラを置き換える、アノテーション不要の野生動物観測プラットフォーム。技術スタック・アーキテクチャ・PoC設計の提案。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Murecho:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0B100C;
+    --ink-2:#121A14;
+    --ink-3:#19231A;
+    --line:#2A382A;
+    --bone:#ECE7D7;
+    --bone-dim:#97A38F;
+    --amber:#F2AB3C;
+    --amber-soft:#F2AB3c1a;
+    --moss:#8DB46A;
+    --clay:#D9663C;
+    --disp:"Zen Kaku Gothic New","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+    --body:"Murecho","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+    --mono:"Space Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;background:var(--ink);color:var(--bone);
+    font-family:var(--body);font-weight:400;line-height:1.8;
+    -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+    overflow-x:hidden;
+  }
+  ::selection{background:var(--amber);color:var(--ink);}
+  a{color:inherit;text-decoration:none;}
+  a:focus-visible,button:focus-visible{outline:2px solid var(--amber);outline-offset:3px;border-radius:2px;}
+
+  /* ---- layout primitives ---- */
+  .wrap{width:min(1120px,92vw);margin:0 auto;}
+  .eyebrow{
+    font-family:var(--mono);font-size:.72rem;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--moss);display:inline-flex;align-items:center;gap:.6em;
+  }
+  .eyebrow::before{content:"";width:22px;height:1px;background:var(--moss);display:inline-block;}
+  .sec{padding:clamp(64px,9vw,120px) 0;border-top:1px solid var(--line);position:relative;}
+  .sec-head{max-width:760px;margin-bottom:clamp(36px,5vw,64px);}
+  .sec-head h2{
+    font-family:var(--disp);font-weight:900;line-height:1.18;
+    font-size:clamp(1.7rem,4.4vw,2.9rem);margin:.5em 0 .35em;letter-spacing:-.01em;
+  }
+  .sec-head p{color:var(--bone-dim);font-size:1.02rem;margin:0;}
+  .amb{color:var(--amber);}
+  .mos{color:var(--moss);}
+
+  /* ---- top bar ---- */
+  header.bar{
+    position:sticky;top:0;z-index:50;background:rgba(11,16,12,.82);
+    backdrop-filter:blur(10px);border-bottom:1px solid var(--line);
+  }
+  .bar-in{display:flex;align-items:center;justify-content:space-between;height:54px;}
+  .brand{font-family:var(--mono);font-size:.74rem;letter-spacing:.16em;color:var(--bone);}
+  .brand b{color:var(--amber);font-weight:700;}
+  nav.top{display:flex;gap:1.4rem;font-family:var(--mono);font-size:.72rem;letter-spacing:.1em;color:var(--bone-dim);}
+  nav.top a{transition:color .2s;}
+  nav.top a:hover{color:var(--amber);}
+  @media(max-width:720px){nav.top{display:none;}}
+
+  /* ---- hero ---- */
+  .hero{position:relative;padding:clamp(56px,8vw,104px) 0 clamp(48px,6vw,80px);overflow:hidden;}
+  .topo{position:absolute;inset:0;z-index:0;opacity:.5;pointer-events:none;
+    -webkit-mask-image:radial-gradient(120% 90% at 70% 30%,#000 30%,transparent 75%);
+            mask-image:radial-gradient(120% 90% at 70% 30%,#000 30%,transparent 75%);}
+  .hero-grid{position:relative;z-index:2;display:grid;grid-template-columns:1.08fr .92fr;gap:clamp(28px,5vw,56px);align-items:center;}
+  @media(max-width:900px){.hero-grid{grid-template-columns:1fr;}}
+  .hero h1{
+    font-family:var(--disp);font-weight:900;letter-spacing:-.02em;
+    font-size:clamp(2.1rem,6.4vw,4rem);line-height:1.1;margin:1rem 0 1.2rem;
+  }
+  .hero h1 .line2{color:var(--amber);}
+  .hero .lede{font-size:1.08rem;color:#cfd2c6;max-width:48ch;margin:0 0 1.8rem;}
+  .chips{display:flex;flex-wrap:wrap;gap:.5rem;}
+  .chip{font-family:var(--mono);font-size:.7rem;letter-spacing:.08em;color:var(--bone-dim);
+    border:1px solid var(--line);border-radius:999px;padding:.34em .85em;}
+  .chip.on{color:var(--ink);background:var(--moss);border-color:var(--moss);font-weight:700;}
+
+  /* ---- viewfinder signature ---- */
+  .finder{
+    position:relative;aspect-ratio:4/3.4;border-radius:6px;background:
+      linear-gradient(180deg,#0e150f,#0a0f0b);
+    border:1px solid var(--line);overflow:hidden;box-shadow:0 30px 80px -40px #000;
+  }
+  .finder .scan{position:absolute;left:0;right:0;height:2px;top:0;
+    background:linear-gradient(90deg,transparent,var(--moss),transparent);opacity:.0;}
+  .finder .grain{position:absolute;inset:0;opacity:.06;mix-blend-mode:screen;
+    background-image:repeating-linear-gradient(0deg,#fff 0 1px,transparent 1px 3px);}
+  .corner{position:absolute;width:22px;height:22px;border:2px solid var(--bone-dim);opacity:.55;}
+  .corner.tl{top:14px;left:14px;border-right:0;border-bottom:0;}
+  .corner.tr{top:14px;right:14px;border-left:0;border-bottom:0;}
+  .corner.bl{bottom:14px;left:14px;border-right:0;border-top:0;}
+  .corner.br{bottom:14px;right:14px;border-left:0;border-top:0;}
+  .finder .meta{position:absolute;top:12px;left:50%;transform:translateX(-50%);
+    font-family:var(--mono);font-size:.62rem;letter-spacing:.18em;color:var(--bone-dim);white-space:nowrap;}
+  .finder .rec{position:absolute;top:30px;right:18px;font-family:var(--mono);font-size:.62rem;letter-spacing:.14em;color:var(--clay);display:flex;align-items:center;gap:.4em;}
+  .finder .rec .dot{width:7px;height:7px;border-radius:50%;background:var(--clay);animation:blink 1.4s steps(2) infinite;}
+  @keyframes blink{50%{opacity:.15;}}
+  .target{position:absolute;left:38%;top:42%;width:78px;height:78px;transform:translate(-50%,-50%);opacity:0;}
+  .target .ring{position:absolute;inset:0;border:1.5px solid var(--amber);border-radius:50%;}
+  .target .eye{position:absolute;width:9px;height:9px;border-radius:50%;background:var(--amber);
+    box-shadow:0 0 14px 4px var(--amber);top:calc(50% - 4px);}
+  .target .eye.l{left:24px;} .target .eye.r{right:24px;}
+  .cross{position:absolute;inset:0;}
+  .cross::before,.cross::after{content:"";position:absolute;background:var(--amber);opacity:.5;}
+  .cross::before{left:50%;top:-10px;bottom:-10px;width:1px;transform:translateX(-.5px);}
+  .cross::after{top:50%;left:-10px;right:-10px;height:1px;transform:translateY(-.5px);}
+  .readout{position:absolute;left:14px;right:14px;bottom:14px;background:rgba(8,12,9,.78);
+    border:1px solid var(--line);border-radius:4px;padding:12px 14px;font-family:var(--mono);
+    font-size:.72rem;line-height:1.75;color:var(--bone);min-height:118px;}
+  .readout .k{color:var(--moss);} .readout .s{color:var(--amber);} .readout .n{color:#e6d39a;} .readout .b{color:var(--clay);}
+  .readout .cur{display:inline-block;width:7px;height:1.05em;background:var(--amber);vertical-align:-2px;animation:blink 1s steps(2) infinite;}
+
+  /* ---- two-col contrast ---- */
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:24px;}
+  @media(max-width:760px){.split{grid-template-columns:1fr;}}
+  .panel{background:var(--ink-2);border:1px solid var(--line);border-radius:8px;padding:28px 26px;}
+  .panel.asis{border-style:dashed;opacity:.92;}
+  .panel h3{font-family:var(--disp);font-weight:700;font-size:1.16rem;margin:.2em 0 .9em;display:flex;align-items:center;gap:.5em;}
+  .tag{font-family:var(--mono);font-size:.62rem;letter-spacing:.14em;padding:.3em .7em;border-radius:4px;}
+  .tag.bad{background:#3a241c;color:var(--clay);} .tag.good{background:#22311b;color:var(--moss);}
+  .panel ul{margin:0;padding:0;list-style:none;}
+  .panel li{padding:.5em 0 .5em 1.4em;position:relative;color:#d7dacf;border-top:1px solid #ffffff0d;}
+  .panel li:first-child{border-top:0;}
+  .panel.asis li::before{content:"×";position:absolute;left:0;color:var(--clay);font-family:var(--mono);}
+  .panel.tobe li::before{content:"→";position:absolute;left:0;color:var(--moss);font-family:var(--mono);}
+
+  /* ---- numbered defense layers ---- */
+  .layers{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+  @media(max-width:820px){.layers{grid-template-columns:1fr;}}
+  .layer{background:var(--ink-2);border:1px solid var(--line);border-radius:8px;padding:26px 24px;position:relative;transition:transform .25s,border-color .25s;}
+  .layer:hover{transform:translateY(-4px);border-color:var(--amber);}
+  .layer .no{font-family:var(--mono);font-size:.78rem;color:var(--amber);letter-spacing:.1em;}
+  .layer h3{font-family:var(--disp);font-weight:700;font-size:1.18rem;margin:.6em 0 .5em;}
+  .layer p{margin:0;color:var(--bone-dim);font-size:.96rem;}
+  .layer .wall{position:absolute;right:20px;top:22px;font-family:var(--mono);font-size:.6rem;color:var(--moss);letter-spacing:.12em;}
+
+  /* ---- architecture flow ---- */
+  .flow{display:flex;flex-direction:column;gap:0;}
+  .zone{border:1px solid var(--line);border-radius:10px;padding:22px 22px 26px;margin-bottom:8px;background:linear-gradient(180deg,#10180f,#0d130d);}
+  .zone-h{display:flex;align-items:baseline;gap:.8em;margin-bottom:18px;}
+  .zone-h .z{font-family:var(--mono);font-size:.68rem;letter-spacing:.2em;color:var(--ink);background:var(--bone-dim);padding:.3em .7em;border-radius:4px;}
+  .zone.edge .z{background:var(--moss);} .zone.aws .z{background:var(--amber);} .zone.view .z{background:#7fa8c4;}
+  .zone-h h3{font-family:var(--disp);font-weight:700;font-size:1.05rem;margin:0;color:var(--bone);}
+  .zone-h span.sub{font-family:var(--mono);font-size:.66rem;color:var(--bone-dim);letter-spacing:.06em;}
+  .nodes{display:flex;flex-wrap:wrap;align-items:stretch;gap:10px;}
+  .node{background:var(--ink-3);border:1px solid var(--line);border-radius:6px;padding:11px 13px;min-width:120px;flex:1 1 120px;transition:border-color .2s,background .2s;}
+  .node:hover{border-color:var(--amber);background:#1d281b;}
+  .node .nl{font-family:var(--mono);font-size:.58rem;letter-spacing:.1em;color:var(--bone-dim);text-transform:uppercase;}
+  .node .nn{font-size:.92rem;font-weight:500;margin-top:.2em;}
+  .node.trig{border-color:var(--amber);background:#211a0d;}
+  .node.esc{border-color:var(--clay);}
+  .arrow{display:flex;align-items:center;justify-content:center;color:var(--bone-dim);font-family:var(--mono);height:18px;}
+  .arrow::before{content:"▼";font-size:.7rem;opacity:.6;}
+  .seam{text-align:center;font-family:var(--mono);font-size:.62rem;color:var(--bone-dim);letter-spacing:.16em;padding:6px 0;}
+
+  /* ---- generic table ---- */
+  .tbl{width:100%;border-collapse:collapse;font-size:.93rem;}
+  .tbl th,.tbl td{text-align:left;padding:13px 14px;border-bottom:1px solid var(--line);vertical-align:top;}
+  .tbl th{font-family:var(--mono);font-size:.64rem;letter-spacing:.14em;text-transform:uppercase;color:var(--moss);font-weight:400;}
+  .tbl td:first-child{font-weight:600;color:var(--bone);white-space:nowrap;}
+  .tbl tr:hover td{background:#ffffff06;}
+  .tbl .svc{font-family:var(--mono);font-size:.82rem;color:var(--amber);}
+  .scoll{overflow-x:auto;border:1px solid var(--line);border-radius:8px;}
+
+  /* ---- edge / doze ---- */
+  .duo{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  @media(max-width:760px){.duo{grid-template-columns:1fr;}}
+  .strat{background:var(--ink-2);border:1px solid var(--line);border-radius:8px;padding:24px;}
+  .strat.pick{border-color:var(--moss);box-shadow:inset 0 0 0 1px #8db46a33;}
+  .strat .badge{font-family:var(--mono);font-size:.6rem;letter-spacing:.14em;color:var(--moss);}
+  .strat h4{font-family:var(--disp);font-weight:700;font-size:1.05rem;margin:.5em 0 .8em;}
+  .kv{display:flex;justify-content:space-between;gap:1em;padding:.4em 0;border-top:1px solid #ffffff0d;font-size:.9rem;}
+  .kv:first-of-type{border-top:0;} .kv .kk{color:var(--bone-dim);} .kv .vv{text-align:right;}
+  .feat{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;}
+  .feat .f{flex:1 1 220px;background:var(--ink-2);border:1px solid var(--line);border-left:2px solid var(--amber);border-radius:6px;padding:18px 20px;}
+  .feat .f h4{font-family:var(--disp);font-weight:700;font-size:1rem;margin:0 0 .4em;}
+  .feat .f p{margin:0;color:var(--bone-dim);font-size:.92rem;}
+
+  /* ---- phases timeline ---- */
+  .phases{position:relative;margin-left:8px;}
+  .phase{position:relative;padding:0 0 26px 38px;border-left:1px solid var(--line);}
+  .phase:last-child{border-left-color:transparent;padding-bottom:0;}
+  .phase::before{content:"";position:absolute;left:-7px;top:2px;width:13px;height:13px;border-radius:50%;background:var(--ink);border:2px solid var(--moss);}
+  .phase.key::before{background:var(--amber);border-color:var(--amber);box-shadow:0 0 12px 2px var(--amber-soft);}
+  .phase .pn{font-family:var(--mono);font-size:.66rem;letter-spacing:.14em;color:var(--amber);}
+  .phase h4{font-family:var(--disp);font-weight:700;font-size:1.08rem;margin:.25em 0 .35em;}
+  .phase p{margin:0;color:var(--bone-dim);font-size:.95rem;}
+  .phase .keytag{display:inline-block;font-family:var(--mono);font-size:.58rem;letter-spacing:.1em;color:var(--ink);background:var(--amber);padding:.2em .6em;border-radius:3px;margin-left:.6em;vertical-align:1px;}
+
+  /* ---- cost ---- */
+  .cost-grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:28px;align-items:center;}
+  @media(max-width:820px){.cost-grid{grid-template-columns:1fr;}}
+  .bignum{font-family:var(--disp);font-weight:900;line-height:1;color:var(--amber);font-size:clamp(2.6rem,8vw,4.4rem);letter-spacing:-.02em;}
+  .bignum small{display:block;font-family:var(--mono);font-size:.8rem;color:var(--bone-dim);letter-spacing:.1em;margin-top:.8em;font-weight:400;}
+
+  /* ---- open questions ---- */
+  .oq{columns:2;column-gap:28px;}
+  @media(max-width:760px){.oq{columns:1;}}
+  .oq li{break-inside:avoid;list-style:none;padding:.6em 0 .6em 1.5em;position:relative;color:#d7dacf;border-bottom:1px solid var(--line);}
+  .oq li::before{content:"?";position:absolute;left:0;font-family:var(--mono);color:var(--clay);}
+
+  /* ---- footer ---- */
+  footer.ft{border-top:1px solid var(--line);padding:46px 0;color:var(--bone-dim);font-size:.86rem;}
+  footer.ft .ft-in{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:center;}
+  footer.ft a{color:var(--amber);font-family:var(--mono);font-size:.8rem;}
+  .note{font-family:var(--mono);font-size:.68rem;letter-spacing:.05em;}
+
+  /* ---- reveal ---- */
+  .rev{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s ease;}
+  .rev.in{opacity:1;transform:none;}
+  @media(prefers-reduced-motion:reduce){
+    *{animation:none!important;transition:none!important;}
+    .rev{opacity:1;transform:none;}
+    html{scroll-behavior:auto;}
+  }
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="wrap bar-in">
+    <div class="brand">ANIMAL&#8209;DETECTION <b>// FIELD TELEMETRY</b></div>
+    <nav class="top">
+      <a href="#why">課題</a>
+      <a href="#walls">防壁</a>
+      <a href="#arch">構成</a>
+      <a href="#stack">スタック</a>
+      <a href="#edge">エッジ</a>
+      <a href="#poc">PoC</a>
+      <a href="#cost">コスト</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ============ HERO ============ -->
+<section class="hero">
+  <svg class="topo" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+    <g fill="none" stroke="#1c2a1b" stroke-width="1">
+      <path d="M-50 120 C 250 60 520 200 760 120 S 1180 40 1260 130"/>
+      <path d="M-50 190 C 250 130 520 270 760 190 S 1180 110 1260 200"/>
+      <path d="M-50 270 C 250 210 520 350 760 270 S 1180 190 1260 280"/>
+      <path d="M-50 360 C 250 300 520 440 760 360 S 1180 280 1260 370"/>
+      <path d="M-50 460 C 250 400 520 540 760 460 S 1180 380 1260 470"/>
+      <path d="M-50 570 C 250 510 520 650 760 570 S 1180 490 1260 580"/>
+    </g>
+  </svg>
+  <div class="wrap hero-grid">
+    <div>
+      <span class="eyebrow">N 35.68&deg; &middot; E 139.77&deg; &middot; 02:47 JST</span>
+      <h1>専用トレイルカメラを、<br><span class="line2">余ったスマホとAWSで置き換える。</span></h1>
+      <p class="lede">古いAndroid端末をエッジに、Amazon Bedrock のマルチモーダル生成AIをクラウドに。動体検知から種の分類・記録・閲覧までを<strong>アノテーション不要</strong>で回す、野生動物観測プラットフォームの技術提案 ＆ PoC設計。</p>
+      <div class="chips">
+        <span class="chip on">Android 再利用</span>
+        <span class="chip">Amazon Bedrock / Claude</span>
+        <span class="chip">サーバーレス</span>
+        <span class="chip">Terraform</span>
+      </div>
+    </div>
+
+    <!-- signature: camera-trap viewfinder -->
+    <div class="finder" id="finder" aria-hidden="true">
+      <div class="grain"></div>
+      <div class="scan" id="scan"></div>
+      <span class="corner tl"></span><span class="corner tr"></span>
+      <span class="corner bl"></span><span class="corner br"></span>
+      <div class="meta">CAM&#8209;07 &middot; ISO&nbsp;6400 &middot; IR&nbsp;ON</div>
+      <div class="rec"><span class="dot"></span>REC</div>
+      <div class="target" id="target">
+        <div class="cross"></div>
+        <div class="ring"></div>
+        <span class="eye l"></span><span class="eye r"></span>
+      </div>
+      <div class="readout" id="readout"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ WHY ============ -->
+<section class="sec" id="why">
+  <div class="wrap">
+    <div class="sec-head rev">
+      <span class="eyebrow">As&#8209;Is &rarr; To&#8209;Be</span>
+      <h2>専用ハードと、終わらないアノテーション。<br>その2つの壁を同時に外す。</h2>
+      <p>導入コストの高い専用機材と、学習データを作り続ける運用コスト。どちらも「気軽に・誰でも」を阻んできた。スマホ再利用と生成AIで、両方を不要にする。</p>
+    </div>
+    <div class="split">
+      <div class="panel asis rev">
+        <h3><span class="tag bad">AS&#8209;IS</span> 現状の課題</h3>
+        <ul>
+          <li>害獣対策・動物追跡に、高価で専用のトレイルカメラが必要 — 導入ハードルが高い。</li>
+          <li>YOLO等の物体検出は、継続的なアノテーション（学習データ作成）のコストと手間がかかる。</li>
+        </ul>
+      </div>
+      <div class="panel tobe rev">
+        <h3><span class="tag good">TO&#8209;BE</span> 実現したい姿</h3>
+        <ul>
+          <li>不要になった古いAndroidスマホをエッジ端末として再利用。誰でも気軽に設置。</li>
+          <li>画像をS3へ送り、Bedrock（Claude）で検出・分類。アノテーション作業を完全に不要化。</li>
+          <li>自然観察・自治体の害獣対策・学術研究まで幅広く寄与するプラットフォームへ。</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ DEFENSE WALLS ============ -->
+<section class="sec" id="walls">
+  <div class="wrap">
+    <div class="sec-head rev">
+      <span class="eyebrow">Cost &amp; Resilience</span>
+      <h2>「全フレームをAIに投げる」を避ける<br>3つの防壁。</h2>
+      <p>生成AIのAPIコストとスロットリングは、設計しなければ確実に破綻する。安価な処理から高価な処理へ、段階的にふるい落とす。</p>
+    </div>
+    <div class="layers">
+      <div class="layer rev">
+        <div class="no">01</div><div class="wall">FREE</div>
+        <h3>端末で動体検知</h3>
+        <p>スマホ内のフレーム差分で空フレームを除去。動きのない映像はBedrockに一切送らない、コストの一次防壁。</p>
+      </div>
+      <div class="layer rev">
+        <div class="no">02</div><div class="wall">CHEAP&rarr;PRECISE</div>
+        <h3>Haiku → Sonnet 2段</h3>
+        <p>まずClaude Haikuで安価に一次トリアージ。曖昧・種同定が要るものだけSonnetへエスカレーション。</p>
+      </div>
+      <div class="layer rev">
+        <div class="no">03</div><div class="wall">SMOOTHING</div>
+        <h3>SQS ＋ 同時実行上限</h3>
+        <p>再接続時の数百件バーストをSQSでならし、BedrockのTPSスロットリングを回避。耐障害の防壁。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ARCHITECTURE ============ -->
+<section class="sec" id="arch">
+  <div class="wrap">
+    <div class="sec-head rev">
+      <span class="eyebrow">Data Flow</span>
+      <h2>撮影から閲覧まで、一本のパイプライン。</h2>
+      <p>PoCは Direct&#8209;to&#8209;S3（Cognito）でコアを最短検証。本番は AWS IoT Core 制御プレーンを、メディア経路を変えずに後付けする段階導入。</p>
+    </div>
+
+    <div class="flow rev">
+      <div class="zone edge">
+        <div class="zone-h"><span class="z">EDGE</span><h3>Android 端末（Foreground Service 常駐）</h3><span class="sub">Duty Cycle ＋ 照度ゲート ＋ Thermal 適応</span></div>
+        <div class="nodes">
+          <div class="node"><div class="nl">CameraX</div><div class="nn">低解像度プレビュー</div></div>
+          <div class="node trig"><div class="nl">Trigger</div><div class="nn">動体検知（無料）</div></div>
+          <div class="node"><div class="nl">Capture</div><div class="nn">キーフレームJPEG＋メタ</div></div>
+          <div class="node"><div class="nl">Room / SQLite</div><div class="nn">ローカルキュー</div></div>
+          <div class="node"><div class="nl">WorkManager</div><div class="nn">S3 マルチパート同期</div></div>
+        </div>
+      </div>
+      <div class="seam">▲ store&#8209;and&#8209;forward ／ UUID冪等 ／ ack後削除 ▲</div>
+
+      <div class="zone aws">
+        <div class="zone-h"><span class="z">AWS</span><h3>サーバーレス取り込み ＆ AI 推論</h3><span class="sub">バースト吸収 → 多段分類 → 記録 → 通知</span></div>
+        <div class="nodes">
+          <div class="node"><div class="nl">S3</div><div class="nn">raw&#8209;media</div></div>
+          <div class="node"><div class="nl">SQS</div><div class="nn">バースト吸収</div></div>
+          <div class="node"><div class="nl">EventBridge Pipes</div><div class="nn">TPS制御点</div></div>
+        </div>
+        <div class="arrow"></div>
+        <div class="nodes">
+          <div class="node trig"><div class="nl">Step Functions Express</div><div class="nn">InvokeHaiku（一次分類）</div></div>
+          <div class="node"><div class="nl">Choice</div><div class="nn">信頼度 / 種同定？</div></div>
+          <div class="node esc"><div class="nl">Bedrock</div><div class="nn">Sonnet エスカレーション</div></div>
+        </div>
+        <div class="arrow"></div>
+        <div class="nodes">
+          <div class="node"><div class="nl">DynamoDB</div><div class="nn">detections（条件付き＝冪等）</div></div>
+          <div class="node"><div class="nl">Lambda</div><div class="nn">サムネ生成 → S3</div></div>
+          <div class="node"><div class="nl">EventBridge → SNS</div><div class="nn">FCMプッシュ / メール</div></div>
+        </div>
+      </div>
+      <div class="seam">▼ 署名URL ／ GraphQL不要の軽量HTTP API ▼</div>
+
+      <div class="zone view">
+        <div class="zone-h"><span class="z">VIEWER</span><h3>Web アプリ（誰でも閲覧）</h3><span class="sub">タイムライン・地図・種別フィルタ</span></div>
+        <div class="nodes">
+          <div class="node"><div class="nl">CloudFront + S3</div><div class="nn">ホスティング</div></div>
+          <div class="node"><div class="nl">Cognito</div><div class="nn">認証</div></div>
+          <div class="node"><div class="nl">API Gateway + Lambda</div><div class="nn">DynamoDB 照会 / 画像表示</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ STACK ============ -->
+<section class="sec" id="stack">
+  <div class="wrap">
+    <div class="sec-head rev">
+      <span class="eyebrow">Tech Stack</span>
+      <h2>各レイヤの採用サービスと、その理由。</h2>
+      <p>AWSのマネージドサービスを最大限活用。すべて Terraform でコード管理し、Bedrock に一本化する（Rekognition Custom Labels は「アノテーション不要」の方針と相反するため不採用）。</p>
+    </div>
+    <div class="scoll rev">
+      <table class="tbl">
+        <thead><tr><th>レイヤ</th><th>採用サービス</th><th>選定理由</th></tr></thead>
+        <tbody>
+          <tr><td>モバイル</td><td class="svc">Android / Kotlin + CameraX</td><td>常時監視・端末内動体検知はOS制御が深いネイティブが最適。省電力・端末互換性に強い。</td></tr>
+          <tr><td>端末認証</td><td class="svc">Cognito Identity Pool</td><td>端末ごとに一時クレデンシャルを発行し、S3への直接アップロードを安全に実現。</td></tr>
+          <tr><td>ストレージ</td><td class="svc">Amazon S3</td><td>マルチパートで不安定回線の再送に強い。不完全マルチパートの自動Abortルールは必須設定。</td></tr>
+          <tr><td>バッファ</td><td class="svc">Amazon SQS</td><td>再接続バーストを吸収し、下流のBedrock呼び出しレートをならす。</td></tr>
+          <tr><td>オーケストレーション</td><td class="svc">EventBridge Pipes + Step Functions (Express)</td><td>Haiku→Sonnetの分岐を宣言的に記述。スロットリングへのbackoffリトライを内蔵し可観測性が高い。</td></tr>
+          <tr><td>AI 推論</td><td class="svc">Amazon Bedrock (Claude)</td><td>アノテーション不要の中核。tool use / JSON Schema で構造化出力しDB投入を確実化。</td></tr>
+          <tr><td>データベース</td><td class="svc">Amazon DynamoDB</td><td>時系列追記中心のアクセスパターンに合致。GSIは時間軸ミックスでホットパーティション回避。</td></tr>
+          <tr><td>通知</td><td class="svc">SNS + FCM / SES</td><td>重要検出のファンアウト。将来の複数ユーザー・自治体宛て購読管理にトピックが効く。</td></tr>
+          <tr><td>API / 閲覧</td><td class="svc">API Gateway HTTP API + S3/CloudFront</td><td>Terraform記述が軽くPoC向き。Amplify Gen2(=CDK)は不採用で一貫性を保つ。</td></tr>
+          <tr><td>IaC / 監視</td><td class="svc">Terraform + CloudWatch</td><td>全AWSリソースをコード管理。Bedrockコスト・Lambda/SFnエラーを可観測化。</td></tr>
+          <tr><td>制御プレーン（本番）</td><td class="svc">AWS IoT Core</td><td>大規模フリートの遠隔設定・死活監視・遠隔コマンド。PoCでは導入せず成長フェーズで後付け。</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ============ EDGE / POWER ============ -->
+<section class="sec" id="edge">
+  <div class="wrap">
+    <div class="sec-head rev">
+      <span class="eyebrow">Power · Heat · Doze</span>
+      <h2>野外で数日〜数週間。<br>本当の壁は「熱と電源」。</h2>
+      <p>CPU/カメラをフル稼働させれば、数時間でバッテリー枯渇かサーマルスロットリングでOSが落ちる。ソフトの工夫で無人稼働を伸ばす。</p>
+    </div>
+
+    <div class="feat rev">
+      <div class="f"><h4>照度センサーで夜間スリープ</h4><p>日没でルクスが閾値以下になればCameraXを完全unbind。真っ黒なノイズ画像をBedrockに送る無駄を根絶。ヒステリシスでチャタリング防止。</p></div>
+      <div class="f"><h4>適応 Duty Cycle（Thermal API）</h4><p>「3秒オン／27秒オフ」のような間欠動作。熱余裕の低下を検知したら自動でオフ時間延長・解像度低下し、強制終了を事前回避。</p></div>
+      <div class="f"><h4>OEM 電池キラー対策</h4><p>Xiaomi/Huawei/Oppo等の独自制限は標準設定だけでは不足。Autostart許可・最適化除外をオンボーディングで機種別に案内。</p></div>
+    </div>
+
+    <div class="sec-head rev" style="margin-top:54px;margin-bottom:24px;">
+      <span class="eyebrow">Doze 戦略 — 段階導入に対応</span>
+    </div>
+    <div class="duo">
+      <div class="strat pick rev">
+        <span class="badge">&#9679; PoC〜標準運用で採用</span>
+        <h4>戦略A：Foreground Service 常駐</h4>
+        <div class="kv"><span class="kk">Doze対策</span><span class="vv">そもそも免除</span></div>
+        <div class="kv"><span class="kk">眠りの深さ</span><span class="vv">常駐＋カメラはunbindで節電</span></div>
+        <div class="kv"><span class="kk">適する周期</span><span class="vv">短周期（数十秒）</span></div>
+        <div class="kv"><span class="kk">理由</span><span class="vv mos">権限やOEMキラーと戦わず確実に回る</span></div>
+      </div>
+      <div class="strat rev">
+        <span class="badge" style="color:var(--bone-dim)">本番エンデュランスで移行</span>
+        <h4>戦略B：AlarmManager ディープスリープ → PIR/BLE</h4>
+        <div class="kv"><span class="kk">Doze対策</span><span class="vv">setExactAndAllowWhileIdle で貫通</span></div>
+        <div class="kv"><span class="kk">眠りの深さ</span><span class="vv">プロセスごと深い眠り</span></div>
+        <div class="kv"><span class="kk">適する周期</span><span class="vv">長周期（数分〜）</span></div>
+        <div class="kv"><span class="kk">究極系</span><span class="vv amb">PIR＋BLE 外部トリガで数週間無人</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ POC PHASES ============ -->
+<section class="sec" id="poc">
+  <div class="wrap">
+    <div class="sec-head rev">
+      <span class="eyebrow">PoC Roadmap</span>
+      <h2>リスクの高い順に潰す、6フェーズ。</h2>
+      <p>最大の不確実性は「Bedrock分類がアノテーションを代替できるか」。だから端末を作る前に、クラウド側のコアを最初に検証する。</p>
+    </div>
+    <div class="phases rev">
+      <div class="phase"><div class="pn">PHASE 0</div><h4>環境準備</h4><p>AWSアカウント / Terraform初期化（S3 backend）/ Bedrockモデルアクセス有効化。</p></div>
+      <div class="phase key"><div class="pn">PHASE 1</div><h4>クラウドのコア検証 <span class="keytag">最重要 / 端末なしで先行</span></h4><p>S3 + SQS + Step Functions + Bedrock(Haiku) + DynamoDB を構築。手元の動物写真をS3に置き、構造化結果がDBに入るかを検証 — 最大リスクを最初に潰す。</p></div>
+      <div class="phase"><div class="pn">PHASE 2</div><h4>エスカレーションと閲覧</h4><p>Haiku→Sonnet分岐を追加。簡易Webビューア（S3/CloudFront/Cognito/API GW）で結果一覧を表示。</p></div>
+      <div class="phase"><div class="pn">PHASE 3</div><h4>Android エッジ最小実装</h4><p>CameraX＋動体検知＋ローカルキュー＋S3アップロードで「撮影→S3→分類→閲覧」をE2E検証。</p></div>
+      <div class="phase"><div class="pn">PHASE 4</div><h4>同期・電源の堅牢化</h4><p>store-and-forwardのオフライン耐性、WorkManager制約、照度ゲート/Duty Cycle/Thermal適応/Doze戦略Aを実機で詰める。</p></div>
+      <div class="phase"><div class="pn">PHASE 5</div><h4>評価</h4><p>既知ラベルで精度・コスト・レイテンシを計測し、提案書に数値で反映する。</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ COST ============ -->
+<section class="sec" id="cost">
+  <div class="wrap">
+    <div class="sec-head rev">
+      <span class="eyebrow">Cost Estimate</span>
+      <h2>PoC規模なら、現実的な小ささ。</h2>
+      <p>前提例：1台・検出トリガ100回/日・各1キーフレームをHaiku・うち20%をSonnetへ。</p>
+    </div>
+    <div class="cost-grid rev">
+      <div class="bignum">数百円<small>〜 千円台 / 月（PoC 1〜数台のオーダー）</small></div>
+      <div class="scoll">
+        <table class="tbl">
+          <thead><tr><th>項目</th><th>月間概算</th><th>備考</th></tr></thead>
+          <tbody>
+            <tr><td>Bedrock</td><td class="svc">Haiku 〜3,000回 ＋ Sonnet 〜600回</td><td>主変数＝動体検知の精度。無駄トリガを減らすほど安い。</td></tr>
+            <tr><td>S3</td><td class="svc">〜600MB</td><td>数円オーダー＋ライフサイクルでGlacier退避。</td></tr>
+            <tr><td>その他</td><td class="svc">SQS / Lambda / SFn / DynamoDB / API GW ほか</td><td>PoC規模ではほぼ無料枠内〜数十円。</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <p class="note" style="margin-top:22px;color:var(--bone-dim)">※ Bedrockの単価は変動するため、実装時点の最新料金で詳細コストモデルを再算出する（本節は桁感の提示）。</p>
+  </div>
+</section>
+
+<!-- ============ GROWTH + OPEN ============ -->
+<section class="sec">
+  <div class="wrap">
+    <div class="sec-head rev">
+      <span class="eyebrow">Phased Rollout &amp; Open Questions</span>
+      <h2>PoCの先に、対称的な成長経路。</h2>
+      <p>取り込み制御もエッジ電源も「価値検証 → スケール要件が顕在化した段階で後付け」という同じ形をとる。</p>
+    </div>
+    <div class="scoll rev" style="margin-bottom:40px;">
+      <table class="tbl">
+        <thead><tr><th>観点</th><th>PoC</th><th>本番</th></tr></thead>
+        <tbody>
+          <tr><td>取り込み制御</td><td>Direct‑to‑S3（Cognito）</td><td class="svc">＋ IoT Core（遠隔設定・死活監視・遠隔コマンド）</td></tr>
+          <tr><td>エッジ電源</td><td>戦略A（FGS＋ソフトDuty Cycle）</td><td class="svc">戦略B（深眠）→ PIR＋BLE（数週間無人）</td></tr>
+          <tr><td>動体検知</td><td>端末ソフト（フレーム差分）</td><td class="svc">PIRトリガが置換（カメラ常時稼働が不要に）</td></tr>
+          <tr><td>API</td><td>API Gateway HTTP API</td><td class="svc">必要に応じ AppSync（GraphQL/サブスクリプション）</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="sec-head" style="margin-bottom:18px;"><span class="eyebrow">本番で詰める論点（PoC範囲外）</span></div>
+    <ul class="oq rev">
+      <li>PIR＋BLEのGATTプロトコル・省電力プロファイル</li>
+      <li>OEM別の自動起動・電池最適化回避の具体手順</li>
+      <li>IoT Coreの証明書プロビジョニング（Fleet Provisioning）</li>
+      <li>個体識別・行動記録など学術用途向けメタデータ拡張</li>
+      <li>マルチテナント（自治体/研究/一般）の権限・データ分離</li>
+      <li>動画フレーム解析時のBedrock拡張とコスト再評価</li>
+    </ul>
+  </div>
+</section>
+
+<footer class="ft">
+  <div class="wrap ft-in">
+    <div>
+      <div class="brand" style="margin-bottom:.4em">ANIMAL&#8209;DETECTION <b>// 技術提案 ＆ PoC設計</b></div>
+      <div class="note">作成日 2026‑06‑18 ・ スマホ × AWS 次世代トレイルカメラ</div>
+    </div>
+    <div style="text-align:right">
+      <a href="docs/superpowers/specs/2026-06-18-smartphone-trailcam-aws-design.md">› 元仕様書（Markdown）を見る</a>
+      <div class="note" style="margin-top:.6em;color:#5d6a57">Generated with Claude Code</div>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // scroll reveal
+  var revs = document.querySelectorAll('.rev');
+  if(reduce || !('IntersectionObserver' in window)){
+    revs.forEach(function(r){r.classList.add('in');});
+  } else {
+    var io = new IntersectionObserver(function(es){
+      es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target);} });
+    },{threshold:.16});
+    revs.forEach(function(r){io.observe(r);});
+  }
+
+  // hero detection sequence
+  var readout = document.getElementById('readout');
+  var target = document.getElementById('target');
+  var scan = document.getElementById('scan');
+  var json = [
+    ['{',''],
+    ['  "animal_present": ','true','k','b'],
+    ['  "category": ','"mammal"','k','s'],
+    ['  "species_guess": ','"wild_boar"','k','s'],
+    ['  "count": ','2','k','n'],
+    ['  "confidence": ','0.82','k','n'],
+    ['  "needs_escalation": ','false','k','b'],
+    ['}','']
+  ];
+
+  function staticRender(){
+    var html='';
+    json.forEach(function(row){
+      if(row.length<=2){ html += '<div>'+row[0]+'</div>'; }
+      else { html += '<div><span class="'+row[2]+'">'+row[0]+'</span><span class="'+row[3]+'">'+row[1]+'</span></div>'; }
+    });
+    readout.innerHTML = html;
+    target.style.opacity = 1;
+  }
+
+  if(reduce){ staticRender(); return; }
+
+  // animate: scan sweep -> lock target -> type json
+  scan.animate(
+    [{top:'0%',opacity:0},{top:'8%',opacity:.9},{top:'88%',opacity:.9},{top:'96%',opacity:0}],
+    {duration:1100,easing:'ease-in-out'}
+  );
+
+  setTimeout(function(){
+    target.animate([{opacity:0,transform:'translate(-50%,-50%) scale(1.5)'},{opacity:1,transform:'translate(-50%,-50%) scale(1)'}],{duration:420,fill:'forwards',easing:'ease-out'});
+    target.style.opacity=1;
+  },1000);
+
+  var i=0;
+  function typeRow(){
+    if(i>=json.length){ return; }
+    var row=json[i];
+    var div=document.createElement('div');
+    if(row.length<=2){ div.textContent=row[0]; }
+    else {
+      div.innerHTML='<span class="'+row[2]+'">'+row[0]+'</span><span class="'+row[3]+'">'+row[1]+'</span>';
+    }
+    div.style.opacity=0;
+    readout.appendChild(div);
+    div.animate([{opacity:0,transform:'translateX(-6px)'},{opacity:1,transform:'none'}],{duration:240,fill:'forwards'});
+    i++;
+    setTimeout(typeRow, i===1?60:150);
+  }
+  setTimeout(function(){
+    var cur=document.createElement('span'); // nothing
+    typeRow();
+  },1350);
+})();
+</script>
+</body>
+</html>
