@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>スマホ × AWS 次世代トレイルカメラ — 技術提案 ＆ PoC設計</title>
-<meta name="description" content="余った古いAndroidスマホとAmazon Bedrockで専用トレイルカメラを置き換える、アノテーション不要の野生動物観測プラットフォーム。技術スタック・アーキテクチャ・PoC設計の提案。">
+<meta name="description" content="余った古いAndroidスマホとクラウドの生成AIで専用トレイルカメラを置き換える、アノテーション不要の野生動物観測プラットフォーム。技術スタック・アーキテクチャ・PoC設計の提案。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Murecho:wght@300;400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -238,6 +238,7 @@
       <a href="#poc">PoC</a>
       <a href="#cost">コスト</a>
       <a href="eval.html" style="color:var(--amber)">検証の記録 ›</a>
+      <a href="gallery.html" style="color:var(--amber)">判定結果 ›</a>
     </nav>
   </div>
 </header>
@@ -258,16 +259,18 @@
     <div>
       <span class="eyebrow">N 35.68&deg; &middot; E 139.77&deg; &middot; 02:47 JST</span>
       <h1>専用トレイルカメラを、<br><span class="line2">余ったスマホとAWSで置き換える。</span></h1>
-      <p class="lede">古いAndroid端末をエッジに、Amazon Bedrock のマルチモーダル生成AIをクラウドに。動体検知から種の分類・記録・閲覧までを<strong>アノテーション不要</strong>で回す、野生動物観測プラットフォームの技術提案 ＆ PoC設計。</p>
+      <p class="lede">古いAndroid端末をエッジに、マルチモーダル生成AIをクラウドに。動体検知から種の分類・記録・閲覧までを<strong>アノテーション不要</strong>で回す、野生動物観測プラットフォームの技術提案 ＆ PoC設計。</p>
       <div class="chips">
         <span class="chip on">Android 再利用</span>
-        <span class="chip">Amazon Bedrock / Claude</span>
+        <span class="chip">クラウド生成AI</span>
         <span class="chip">サーバーレス</span>
         <span class="chip">Terraform</span>
       </div>
       <p class="lede" style="margin:1.5rem 0 0;font-size:.96rem">
         <a href="eval.html" style="color:var(--amber);text-decoration:none;border-bottom:1px solid var(--amber);padding-bottom:2px">› Phase 1 の検証結果を見る</a>
-        <span style="color:var(--bone-dim)"> — 実際の評価画像・プロンプト・AI の回答つき。696 枚・9 run の実測（種同定 top-1 0.649 / 目標 0.700）</span>
+        <span style="color:var(--bone-dim)"> ／ </span>
+        <a href="gallery.html" style="color:var(--amber);text-decoration:none;border-bottom:1px solid var(--amber);padding-bottom:2px">› 判定結果 全719枚</a>
+        <span style="color:var(--bone-dim)"> — 実際の評価画像・プロンプト・AI の回答つき。719 枚・12 run の実測（種同定 top-1 0.851 / 目標 0.700、8 基準中 7 達成）</span>
       </p>
     </div>
 
@@ -309,7 +312,7 @@
         <h3><span class="tag good">TO&#8209;BE</span> 実現したい姿</h3>
         <ul>
           <li>不要になった古いAndroidスマホをエッジ端末として再利用。誰でも気軽に設置。</li>
-          <li>画像をS3へ送り、Bedrock（Claude）で検出・分類。アノテーション作業を完全に不要化。</li>
+          <li>画像をS3へ送り、クラウドの生成AIで検出・分類。アノテーション作業を完全に不要化。</li>
           <li>自然観察・自治体の害獣対策・学術研究まで幅広く寄与するプラットフォームへ。</li>
         </ul>
       </div>
@@ -329,17 +332,17 @@
       <div class="layer rev">
         <div class="no">01</div><div class="wall">FREE</div>
         <h3>端末で動体検知</h3>
-        <p>スマホ内のフレーム差分で空フレームを除去。動きのない映像はBedrockに一切送らない、コストの一次防壁。</p>
+        <p>スマホ内のフレーム差分で空フレームを除去。動きのない映像は生成AIに一切送らない、コストの一次防壁。</p>
       </div>
       <div class="layer rev">
         <div class="no">02</div><div class="wall">CHEAP&rarr;PRECISE</div>
-        <h3>Haiku → Sonnet 2段</h3>
-        <p>まずClaude Haikuで安価に一次トリアージ。曖昧・種同定が要るものだけSonnetへエスカレーション。</p>
+        <h3>安価モデル → 上位モデルの2段</h3>
+        <p>まず安価なモデルで一次トリアージ。自信度が低いものだけ上位モデルへエスカレーション。</p>
       </div>
       <div class="layer rev">
         <div class="no">03</div><div class="wall">SMOOTHING</div>
         <h3>SQS ＋ 同時実行上限</h3>
-        <p>再接続時の数百件バーストをSQSでならし、BedrockのTPSスロットリングを回避。耐障害の防壁。</p>
+        <p>再接続時の数百件バーストをSQSでならし、推論APIのスロットリングを回避。耐障害の防壁。</p>
       </div>
     </div>
   </div>
@@ -376,9 +379,9 @@
         </div>
         <div class="arrow"></div>
         <div class="nodes">
-          <div class="node trig"><div class="nl">Step Functions Express</div><div class="nn">InvokeHaiku（一次分類）</div></div>
+          <div class="node trig"><div class="nl">Step Functions Express</div><div class="nn">Invoke（一次分類）</div></div>
           <div class="node"><div class="nl">Choice</div><div class="nn">信頼度 / 種同定？</div></div>
-          <div class="node esc"><div class="nl">Bedrock</div><div class="nn">Sonnet エスカレーション</div></div>
+          <div class="node esc"><div class="nl">生成AI</div><div class="nn">上位モデルへエスカレーション</div></div>
         </div>
         <div class="arrow"></div>
         <div class="nodes">
@@ -407,7 +410,7 @@
     <div class="sec-head rev">
       <span class="eyebrow">Tech Stack</span>
       <h2>各レイヤの採用サービスと、その理由。</h2>
-      <p>AWSのマネージドサービスを最大限活用。すべて Terraform でコード管理し、Bedrock に一本化する（Rekognition Custom Labels は「アノテーション不要」の方針と相反するため不採用）。</p>
+      <p>AWSのマネージドサービスを最大限活用。すべて Terraform でコード管理し、推論は生成AIに一本化する（Rekognition Custom Labels は「アノテーション不要」の方針と相反するため不採用）。</p>
     </div>
     <div class="scoll rev">
       <table class="tbl">
@@ -416,13 +419,13 @@
           <tr><td>モバイル</td><td class="svc">Android / Kotlin + CameraX</td><td>常時監視・端末内動体検知はOS制御が深いネイティブが最適。省電力・端末互換性に強い。</td></tr>
           <tr><td>端末認証</td><td class="svc">Cognito Identity Pool</td><td>端末ごとに一時クレデンシャルを発行し、S3への直接アップロードを安全に実現。</td></tr>
           <tr><td>ストレージ</td><td class="svc">Amazon S3</td><td>マルチパートで不安定回線の再送に強い。不完全マルチパートの自動Abortルールは必須設定。</td></tr>
-          <tr><td>バッファ</td><td class="svc">Amazon SQS</td><td>再接続バーストを吸収し、下流のBedrock呼び出しレートをならす。</td></tr>
-          <tr><td>オーケストレーション</td><td class="svc">EventBridge Pipes + Step Functions (Express)</td><td>Haiku→Sonnetの分岐を宣言的に記述。スロットリングへのbackoffリトライを内蔵し可観測性が高い。</td></tr>
-          <tr><td>AI 推論</td><td class="svc">Amazon Bedrock (Claude)</td><td>アノテーション不要の中核。tool use / JSON Schema で構造化出力しDB投入を確実化。</td></tr>
+          <tr><td>バッファ</td><td class="svc">Amazon SQS</td><td>再接続バーストを吸収し、下流の推論呼び出しレートをならす。</td></tr>
+          <tr><td>オーケストレーション</td><td class="svc">EventBridge Pipes + Step Functions (Express)</td><td>一次分類→エスカレーションの分岐を宣言的に記述。スロットリングへのbackoffリトライを内蔵し可観測性が高い。</td></tr>
+          <tr><td>AI 推論</td><td class="svc">Google Cloud Vertex AI (Gemini)</td><td>アノテーション不要の中核。tool use / JSON Schema で構造化出力しDB投入を確実化。</td></tr>
           <tr><td>データベース</td><td class="svc">Amazon DynamoDB</td><td>時系列追記中心のアクセスパターンに合致。GSIは時間軸ミックスでホットパーティション回避。</td></tr>
           <tr><td>通知</td><td class="svc">SNS + FCM / SES</td><td>重要検出のファンアウト。将来の複数ユーザー・自治体宛て購読管理にトピックが効く。</td></tr>
           <tr><td>API / 閲覧</td><td class="svc">API Gateway HTTP API + S3/CloudFront</td><td>Terraform記述が軽くPoC向き。Amplify Gen2(=CDK)は不採用で一貫性を保つ。</td></tr>
-          <tr><td>IaC / 監視</td><td class="svc">Terraform + CloudWatch</td><td>全AWSリソースをコード管理。Bedrockコスト・Lambda/SFnエラーを可観測化。</td></tr>
+          <tr><td>IaC / 監視</td><td class="svc">Terraform + CloudWatch</td><td>全AWSリソースをコード管理。推論コスト・Lambda/SFnエラーを可観測化。</td></tr>
           <tr><td>制御プレーン（本番）</td><td class="svc">AWS IoT Core</td><td>大規模フリートの遠隔設定・死活監視・遠隔コマンド。PoCでは導入せず成長フェーズで後付け。</td></tr>
         </tbody>
       </table>
@@ -440,7 +443,7 @@
     </div>
 
     <div class="feat rev">
-      <div class="f"><h4>照度センサーで夜間スリープ</h4><p>日没でルクスが閾値以下になればCameraXを完全unbind。真っ黒なノイズ画像をBedrockに送る無駄を根絶。ヒステリシスでチャタリング防止。</p></div>
+      <div class="f"><h4>照度センサーで夜間スリープ</h4><p>日没でルクスが閾値以下になればCameraXを完全unbind。真っ黒なノイズ画像を生成AIに送る無駄を根絶。ヒステリシスでチャタリング防止。</p></div>
       <div class="f"><h4>適応 Duty Cycle（Thermal API）</h4><p>「3秒オン／27秒オフ」のような間欠動作。熱余裕の低下を検知したら自動でオフ時間延長・解像度低下し、強制終了を事前回避。</p></div>
       <div class="f"><h4>OEM 電池キラー対策</h4><p>Xiaomi/Huawei/Oppo等の独自制限は標準設定だけでは不足。Autostart許可・最適化除外をオンボーディングで機種別に案内。</p></div>
     </div>
@@ -475,12 +478,12 @@
     <div class="sec-head rev">
       <span class="eyebrow">PoC Roadmap</span>
       <h2>リスクの高い順に潰す、6フェーズ。</h2>
-      <p>最大の不確実性は「Bedrock分類がアノテーションを代替できるか」。だから端末を作る前に、クラウド側のコアを最初に検証する。</p>
+      <p>最大の不確実性は「生成AIによる分類がアノテーションを代替できるか」。だから端末を作る前に、クラウド側のコアを最初に検証する。</p>
     </div>
     <div class="phases rev">
-      <div class="phase"><div class="pn">PHASE 0</div><h4>環境準備</h4><p>AWSアカウント / Terraform初期化（S3 backend）/ Bedrockモデルアクセス有効化。</p></div>
-      <div class="phase key"><div class="pn">PHASE 1</div><h4>クラウドのコア検証 <span class="keytag">最重要 / 端末なしで先行</span></h4><p>S3 + SQS + Step Functions + Bedrock(Haiku) + DynamoDB を構築。手元の動物写真をS3に置き、構造化結果がDBに入るかを検証 — 最大リスクを最初に潰す。</p></div>
-      <div class="phase"><div class="pn">PHASE 2</div><h4>エスカレーションと閲覧</h4><p>Haiku→Sonnet分岐を追加。簡易Webビューア（S3/CloudFront/Cognito/API GW）で結果一覧を表示。</p></div>
+      <div class="phase"><div class="pn">PHASE 0</div><h4>環境準備</h4><p>AWSアカウント / Terraform初期化（S3 backend）/ 推論モデルのアクセス有効化。</p></div>
+      <div class="phase key"><div class="pn">PHASE 1</div><h4>クラウドのコア検証 <span class="keytag">最重要 / 端末なしで先行</span></h4><p>S3 + SQS + Step Functions + 生成AI + DynamoDB を構築。手元の動物写真をS3に置き、構造化結果がDBに入るかを検証 — 最大リスクを最初に潰す。</p></div>
+      <div class="phase"><div class="pn">PHASE 2</div><h4>エスカレーションと閲覧</h4><p>上位モデルへのエスカレーション分岐を追加。簡易Webビューア（S3/CloudFront/Cognito/API GW）で結果一覧を表示。</p></div>
       <div class="phase"><div class="pn">PHASE 3</div><h4>Android エッジ最小実装</h4><p>CameraX＋動体検知＋ローカルキュー＋S3アップロードで「撮影→S3→分類→閲覧」をE2E検証。</p></div>
       <div class="phase"><div class="pn">PHASE 4</div><h4>同期・電源の堅牢化</h4><p>store-and-forwardのオフライン耐性、WorkManager制約、照度ゲート/Duty Cycle/Thermal適応/Doze戦略Aを実機で詰める。</p></div>
       <div class="phase"><div class="pn">PHASE 5</div><h4>評価</h4><p>既知ラベルで精度・コスト・レイテンシを計測し、提案書に数値で反映する。</p></div>
@@ -494,7 +497,7 @@
     <div class="sec-head rev">
       <span class="eyebrow">Cost Estimate</span>
       <h2>PoC規模なら、現実的な小ささ。</h2>
-      <p>前提例：1台・検出トリガ100回/日・各1キーフレームをHaiku・うち20%をSonnetへ。</p>
+      <p>前提例：1台・検出トリガ100回/日・各1キーフレームを一次分類へ。</p>
     </div>
     <div class="cost-grid rev">
       <div class="bignum">数百円<small>〜 千円台 / 月（PoC 1〜数台のオーダー）</small></div>
@@ -502,14 +505,14 @@
         <table class="tbl">
           <thead><tr><th>項目</th><th>月間概算</th><th>備考</th></tr></thead>
           <tbody>
-            <tr><td>Bedrock</td><td class="svc">Haiku 〜3,000回 ＋ Sonnet 〜600回</td><td>主変数＝動体検知の精度。無駄トリガを減らすほど安い。</td></tr>
+            <tr><td>AI 推論</td><td class="svc">〜3,000回/月</td><td>主変数＝動体検知の精度。無駄トリガを減らすほど安い。</td></tr>
             <tr><td>S3</td><td class="svc">〜600MB</td><td>数円オーダー＋ライフサイクルでGlacier退避。</td></tr>
             <tr><td>その他</td><td class="svc">SQS / Lambda / SFn / DynamoDB / API GW ほか</td><td>PoC規模ではほぼ無料枠内〜数十円。</td></tr>
           </tbody>
         </table>
       </div>
     </div>
-    <p class="note" style="margin-top:22px;color:var(--bone-dim)">※ Bedrockの単価は変動するため、実装時点の最新料金で詳細コストモデルを再算出する（本節は桁感の提示）。</p>
+    <p class="note" style="margin-top:22px;color:var(--bone-dim)">※ 生成AIの単価は変動するため、実装時点の最新料金で詳細コストモデルを再算出する（本節は桁感の提示）。</p>
   </div>
 </section>
 
@@ -539,7 +542,7 @@
       <li>IoT Coreの証明書プロビジョニング（Fleet Provisioning）</li>
       <li>個体識別・行動記録など学術用途向けメタデータ拡張</li>
       <li>マルチテナント（自治体/研究/一般）の権限・データ分離</li>
-      <li>動画フレーム解析時のBedrock拡張とコスト再評価</li>
+      <li>動画フレーム解析時の推論拡張とコスト再評価</li>
     </ul>
   </div>
 </section>

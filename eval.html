@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>検証の記録 — Phase 1 実測ログ | animal-detection</title>
-<meta name="description" content="スマホ×Amazon Bedrock の野生動物判定 PoC・Phase 1 の検証記録。実際に投げたプロンプト、実際の評価画像、AI の回答、9 run 分の実測値と Go/No-Go 判定を公開しています。">
+<meta name="description" content="スマホ×生成AI の野生動物判定 PoC・Phase 1 の検証記録。実際に投げたプロンプト、実際の評価画像、AI の回答、12 run 分の実測値と Go/No-Go 判定を公開しています。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,700&family=DM+Mono:wght@400;500&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
@@ -234,21 +234,22 @@
       <a href="#results" data-spy="results">結果</a>
       <a href="#findings" data-spy="findings">わかったこと</a>
       <a href="#next" data-spy="next">課題</a>
+      <a href="gallery.html" class="btn">判定結果 全719枚</a>
       <a href="index.html" class="btn">提案サマリ</a>
     </nav>
   </div>
 </header>
 
 <div class="wrap head">
-  <span class="eyebrow">Phase 1 Evaluation Log ・ 2026-09-02 → 09-06</span>
-  <h1>写真 696 枚を AI に解かせて、<em>どこまで当たるかを測った。</em></h1>
-  <p class="lede">Phase 1 の最大の仮説は「アノテーションなしで、生成 AI が実用精度の種同定をできるか」。クラウド側のパイプラインを組み、ラベル付きの野生動物写真を流し込んで 9 回の評価 run を回しました。実際に投げたプロンプト、実際の画像、AI が返した回答、そして数値をそのまま公開します。</p>
-  <span class="verdict">判定: NO-GO（継続改善中）</span>
+  <span class="eyebrow">Phase 1 Evaluation Log ・ 2026-09-02 → 09-22</span>
+  <h1>写真 719 枚を AI に解かせて、<em>どこまで当たるかを測った。</em></h1>
+  <p class="lede">Phase 1 の最大の仮説は「アノテーションなしで、生成 AI が実用精度の種同定をできるか」。クラウド側のパイプラインを組み、ラベル付きの野生動物写真を流し込んで 12 回の評価 run を回しました。実際に投げたプロンプト、実際の画像、AI が返した回答、そして数値をそのまま公開します。<a href="gallery.html">判定結果は 719 枚すべてを 1 枚ずつ公開しています</a>。</p>
+  <span class="verdict">判定: NO-GO（8 基準中 7 達成・残り 1）</span>
   <div class="keys">
-    <div class="key"><span class="v">0.649 <small>/ 目標 0.700</small></span><span class="l">種同定 top-1 accuracy（最良 run）。初回の本評価は 0.515</span></div>
-    <div class="key"><span class="v">0.476 <small>← 0.160</small></span><span class="l">夜間赤外線画像の top-1。夜だけ Sonnet 5 に切替えた効果</span></div>
-    <div class="key"><span class="v">0.815 <small>/ 目標 0.80</small></span><span class="l">イノシシ recall。重点 4 種で初の目標達成</span></div>
-    <div class="key"><span class="v">$4.10 <small>/ 696 枚</small></span><span class="l">最良 run の実費。Haiku 単独なら $2.24</span></div>
+    <div class="key"><span class="v">0.851 <small>/ 目標 0.700</small></span><span class="l">種同定 top-1 accuracy。初回の本評価は 0.515 で、主指標は初めて目標を超えた</span></div>
+    <div class="key"><span class="v">0.680 <small>← 0.160</small></span><span class="l">夜間赤外線画像の top-1。指示文は変えず、推論先を替えただけの差</span></div>
+    <div class="key"><span class="v">7 / 8 <small>基準を達成</small></span><span class="l">残る不合格はツキノワグマ recall 0.724（目標 0.90）の 1 つだけ</span></div>
+    <div class="key"><span class="v">$0.96 <small>/ 719 枚</small></span><span class="l">実費。前回の最良 run（$4.10）から 77% 減</span></div>
   </div>
 </div>
 
@@ -262,13 +263,13 @@
     <div class="grid2">
       <div class="panel">
         <h3>評価セット（iteration 1 以降）</h3>
-        <div class="kv"><span class="kk">総枚数</span><span class="vv">696 枚（陽性 656 ＋ 陰性 40）</span></div>
-        <div class="kv"><span class="kk">昼 / 夜</span><span class="vv">381 / 275（夜 = 赤外線モノクロ）</span></div>
+        <div class="kv"><span class="kk">総枚数</span><span class="vv">719 枚（陽性 679 ＋ 陰性 40）</span></div>
+        <div class="kv"><span class="kk">昼 / 夜</span><span class="vv">438 / 281（夜 = 赤外線モノクロ）</span></div>
         <div class="kv"><span class="kk">種数</span><span class="vv">14 種 ＋「動物なし」</span></div>
         <div class="kv"><span class="kk">出典</span><span class="vv">iNaturalist（CC0 / CC-BY）</span></div>
         <div class="kv"><span class="kk">前処理</span><span class="vv">長辺 1568px・3.75MB 以下へ縮小</span></div>
-        <div class="kv"><span class="kk">品質管理</span><span class="vv">Haiku で全件スクリーニングし、別種・死骸・足跡のみ等 73 枚を除外</span></div>
-        <p class="small muted" style="margin-top:12px">重点 4 種の内訳: ニホンザル 89・イノシシ 81・ニホンジカ 79・ツキノワグマ 69。判定に必要な n≥80 に届かない種は「判定不能」として合否をつけません。</p>
+        <div class="kv"><span class="kk">品質管理</span><span class="vv">AI で全件スクリーニングし、別種・死骸・足跡のみ等 81 枚を除外</span></div>
+        <p class="small muted" style="margin-top:12px">重点 4 種の内訳: ニホンザル 89・ツキノワグマ 87・ニホンジカ 84・イノシシ 81。<b>4 種すべてが判定に必要な n≥80 を満たした</b>ため、今回は全種で合否が確定しています（前回はクマ 69・シカ 79 で「判定不能」でした）。</p>
       </div>
       <div class="panel">
         <h3>採点のルール</h3>
@@ -287,7 +288,7 @@
         <tbody>
           <tr><td>① 投入</td><td class="mono">S3 raw-media/eval-{runId}/</td><td>画像をアップロードし、正解ラベルを Object Annotation として添付する</td></tr>
           <tr><td>② 起動</td><td class="mono">SQS → EventBridge Pipes</td><td>ObjectCreated を 1 枚ずつ同期起動に変換（失敗は DLQ へ）</td></tr>
-          <tr><td>③ 推論</td><td class="mono">Step Functions → Lambda → Bedrock</td><td>昼夜を画素から判定 → プロンプトとモデルを選び InvokeModel</td></tr>
+          <tr><td>③ 推論</td><td class="mono">Step Functions → Lambda → Vertex AI</td><td>昼夜を画素から判定 → プロンプトとモデルを選んで生成 AI を呼ぶ</td></tr>
           <tr><td>④ 記録</td><td class="mono">DynamoDB detections</td><td>条件付き書き込みで重複排除。modelId・promptVersion・トークン数も記録</td></tr>
           <tr><td>⑤ 採点</td><td class="mono">scripts/score_eval.py</td><td>封をした正解と突き合わせ、Markdown / CSV / HTML のレポートを生成</td></tr>
         </tbody>
@@ -300,7 +301,7 @@
     <div class="sec-head">
       <span class="eyebrow">02 ・ 実際に投げているもの</span>
       <h2>指示文は短い。答えの「形」はツール定義で固定する。</h2>
-      <p>画像 1 枚とテキスト 1 通を Bedrock に投げ、<code>tool_choice</code> で単一ツール <code>record_detection</code> の呼び出しを強制します。これで自由文の揺れが消え、分類問題が「選択肢から 1 つ選ぶ」問題になります。昼（カラー）と夜（赤外線モノクロ）で指示文を切り替えています。</p>
+      <p>画像 1 枚とテキスト 1 通を生成 AI に投げ、単一ツール <code>record_detection</code> の呼び出しを強制します。これで自由文の揺れが消え、分類問題が「選択肢から 1 つ選ぶ」問題になります。昼（カラー）と夜（赤外線モノクロ）で指示文を切り替えています。<b>この指示文は推論先を Bedrock から Vertex AI へ移した後も 1 文字も変えていません</b> — 下の <code>prompt_version</code>（本文の sha256）が全 run で一致していることがその証拠で、だから run どうしを直接比べられます。</p>
     </div>
     <div class="grid2">
       <div class="panel">
@@ -354,7 +355,7 @@
     <div class="sec-head">
       <span class="eyebrow">03 ・ 実例</span>
       <h2>同じ写真に、同じ指示。返ってきた答えを並べる。</h2>
-      <p>以下はすべて評価セットの実データです。画像は iNaturalist の CC-BY 写真（撮影者は各画像下に表示）、回答テキストは DynamoDB に記録された <code>species</code> / <code>confidence</code> / <code>notes</code> をそのまま引用しています。</p>
+      <p>以下はすべて評価セットの実データです。画像は iNaturalist の CC-BY 写真（撮影者は各画像下に表示）、回答テキストは DynamoDB に記録された <code>species</code> / <code>confidence</code> / <code>notes</code> をそのまま引用しています。<b>同じ写真に同じ指示文を与え、推論先だけを替えた結果</b>を 3 段で並べています。<a href="gallery.html">残り 713 枚も同じ形で公開しています</a>。</p>
     </div>
     <div class="cards">
 
@@ -372,13 +373,18 @@
               <span class="said">japanese_macaque <span class="cf">confidence 0.95 ・ count 3 ・ needs_escalation true</span></span>
               <p class="notes">3頭のニホンザルが道路上に出現。赤い顔面部が特徴的で、グループで移動中。人間の生活空間への侵入のため、エスカレーションが必要。</p>
             </div>
+            <div class="ans right">
+              <span class="run">gemini3-base ・ Gemini 3.8 Flash ・ 入力 1,278 tok / 出力 68 tok</span>
+              <span class="said">japanese_macaque <span class="cf">confidence 0.99 ・ count 3</span></span>
+              <p class="notes">道路上にニホンザル3頭が確認されます。</p>
+            </div>
           </div>
         </div>
         <p class="takeaway"><b>読みどころ:</b> 種だけでなく頭数と状況を日本語で書いてくる — 検出器には原理的にできない部分です。一方この写真の正解ラベルの頭数は <b>1</b>。評価セットの <code>count</code> は取得時に全件 1 で入っており、AI の「3頭」の方が正しい。これは<b>正解データ側の限界</b>で、頭数の精度は現状この評価では正しく測れていません。</p>
       </article>
 
       <article class="card">
-        <div class="card-h"><span class="no">CASE 02</span><h3>夜のクマ。Haiku は「タヌキ」、Sonnet 5 は当てた</h3><span class="chip night">夜 / INFRARED</span><span class="chip ng">Haiku 誤答</span><span class="chip ok">Sonnet 5 正解</span></div>
+        <div class="card-h"><span class="no">CASE 02</span><h3>夜のクマ。Haiku は「タヌキ」、Gemini は 0.95 で当てた</h3><span class="chip night">夜 / INFRARED</span><span class="chip ng">Haiku 誤答</span><span class="chip ok">Sonnet 5 正解</span><span class="chip ok">Gemini 正解</span></div>
         <div class="card-b">
           <div class="shot">
             <img src="assets/eval/night-bear.jpg" alt="赤外線モノクロのトレイルカメラ写真。倒木の上で採食するツキノワグマ" width="900" height="675" loading="lazy">
@@ -406,13 +412,18 @@
               <span class="said">asian_black_bear <span class="cf">confidence 0.55 ・ needs_escalation true</span></span>
               <p class="notes">大型の四肢動物で、胴が太く丸みがあり、吻が短く前方に突き出た形状。首から肩にかけての盛り上がりと重心の低さから中型〜大型哺乳類と推測。アイシャインは片目のみ弱く確認できる程度で個体数判断の補助情報としては不十分。植生との比較で体長はやや大きめ。輪郭のみでは確実な種同定が難しく、ツキノワグマの可能性が高いと判断したが確信度は中程度。</p>
             </div>
+            <div class="ans right">
+              <span class="run">gemini3-base ・ Gemini 3.8 Flash ・ 入力 1,391 tok / 出力 121 tok</span>
+              <span class="said">asian_black_bear <span class="cf">confidence 0.95 ・ needs_escalation true</span></span>
+              <p class="notes">大型でがっしりとした胴体と太い四肢、丸い耳、外部から目立たない極めて短い尾などの形態的特徴からツキノワグマ（asian_black_bear）と判定。人身被害の恐れがある特定危険動物のためエスカレーションが必要です。</p>
+            </div>
           </div>
         </div>
-        <p class="takeaway"><b>読みどころ:</b> 指示文も画像も同じで、<b>違うのはモデルだけ</b>。Haiku は「中型肉食動物」と読み違えたまま最も近い候補（タヌキ）に丸め、Sonnet 5 は肩の盛り上がりと吻の形という実際に効く手がかりを拾っています。夜間の弱点がプロンプトではなくモデル容量の問題だ、と判断した根拠がこれです。</p>
+        <p class="takeaway"><b>読みどころ:</b> 指示文も画像も同じで、<b>違うのはモデルだけ</b>。Haiku は「中型肉食動物」と読み違えたまま最も近い候補（タヌキ）に丸め、Sonnet 5 は肩の盛り上がりと吻の形を拾って正解にたどり着きましたが確信度は 0.55 止まり。Gemini 3.8 Flash は同じ写真を <b>confidence 0.95</b> で当て、しかもクマであることを理由にエスカレーションまで立てています。夜間の弱点がプロンプトではなくモデル容量の問題だ、と判断した根拠がこれです。</p>
       </article>
 
       <article class="card">
-        <div class="card-h"><span class="no">CASE 03</span><h3>典型的なイノシシでも、Haiku は答えを控えた</h3><span class="chip night">夜 / INFRARED</span><span class="chip hold">Haiku 棄権</span><span class="chip ok">Sonnet 5 正解</span></div>
+        <div class="card-h"><span class="no">CASE 03</span><h3>典型的なイノシシでも、Haiku は答えを控えた</h3><span class="chip night">夜 / INFRARED</span><span class="chip hold">Haiku 棄権</span><span class="chip ok">Sonnet 5 正解</span><span class="chip ok">Gemini 正解</span></div>
         <div class="card-b">
           <div class="shot">
             <img src="assets/eval/night-boar.jpg" alt="赤外線モノクロのトレイルカメラ写真。林床を歩くイノシシ、片目に光の反射" width="900" height="674" loading="lazy">
@@ -430,13 +441,18 @@
               <span class="said">wild_boar <span class="cf">confidence 0.85</span></span>
               <p class="notes">吻が長く突出し、耳が小さく立ち、背線が肩から尻にかけて緩やかに盛り上がった体型。尾は細く短め。脚は比較的短く胴に対して太い。単独個体で、アイシャイン(反射光点)は1点のみ確認。周囲の落葉樹林の枝葉と比較して中型の体格。これらの特徴からイノシシと判断。</p>
             </div>
+            <div class="ans right">
+              <span class="run">gemini3-base ・ Gemini 3.8 Flash ・ 入力 1,391 tok / 出力 105 tok</span>
+              <span class="said">wild_boar <span class="cf">confidence 0.98</span></span>
+              <p class="notes">くさび形の頭部、前方に長く突き出た吻部、がっしりとした胴体、胴に対して短く頑丈な脚、細く短い尾が観察でき、イノシシの特徴と一致します。</p>
+            </div>
           </div>
         </div>
-        <p class="takeaway"><b>読みどころ:</b> 夜用プロンプトの「絞り込めないなら推測せず unknown」が効きすぎ、人間なら一目でわかる画像まで棄権していました。イノシシの recall が 0.444 → 0.815 へ跳ねたのは、この種の取りこぼしが解消したためです。</p>
+        <p class="takeaway"><b>読みどころ:</b> 夜用プロンプトの「絞り込めないなら推測せず unknown」が効きすぎ、人間なら一目でわかる画像まで棄権していました。イノシシの recall は 0.444（Haiku）→ 0.815（夜だけ Sonnet 5）→ <b>0.938</b>（Gemini）。棄権するかどうかは指示文ではなく、<b>画像から特徴を読み取れたかどうか</b>で決まっています。</p>
       </article>
 
       <article class="card">
-        <div class="card-h"><span class="no">CASE 04</span><h3>ハクビシンは、Haiku ではほぼ全滅だった</h3><span class="chip night">夜 / INFRARED</span><span class="chip ng">Haiku 誤答</span><span class="chip ok">Sonnet 5 正解</span></div>
+        <div class="card-h"><span class="no">CASE 04</span><h3>ハクビシンは、Haiku ではほぼ全滅だった</h3><span class="chip night">夜 / INFRARED</span><span class="chip ng">Haiku 誤答</span><span class="chip ok">Sonnet 5 正解</span><span class="chip ok">Gemini 正解</span></div>
         <div class="card-b">
           <div class="shot">
             <img src="assets/eval/night-civet.jpg" alt="赤外線モノクロのトレイルカメラ写真。倒木の上を歩くハクビシン。画面下に日時と気温のスタンプ" width="900" height="506" loading="lazy">
@@ -454,13 +470,18 @@
               <span class="said">masked_palm_civet <span class="cf">confidence 0.55</span></span>
               <p class="notes">丸太上を歩く中型動物。体長に対して尾が長く太めで、先端までしっかりした太さを保っている。吻はやや短く尖り、耳は小さく丸みを帯びる。背線は緩やかに湾曲し、脚は比較的短め。…色や斑紋情報は判定に使用していない。</p>
             </div>
+            <div class="ans right">
+              <span class="run">gemini3-base ・ Gemini 3.8 Flash ・ 入力 1,427 tok / 出力 97 tok</span>
+              <span class="said">masked_palm_civet <span class="cf">confidence 0.90</span></span>
+              <p class="notes">胴体と同等程度に非常に長い尾、細長い胴と短い四肢、小さめの頭部と丸みのある耳など、プロポーションの特徴からハクビシンと判定。</p>
+            </div>
           </div>
         </div>
-        <p class="takeaway"><b>読みどころ:</b> 決め手は「尾の長さ」。Haiku は同じ写真を見て「短めの尾」と書き、Sonnet 5 は「体長に対して尾が長く太め」と書いています。ハクビシンの recall は 0.025 → 0.600。困っているのは候補の選び方ではなく、<b>画像から特徴を読み取る段階</b>でした。</p>
+        <p class="takeaway"><b>読みどころ:</b> 決め手は「尾の長さ」。Haiku は同じ写真を見て「短めの尾」と書き、Sonnet 5 と Gemini は「体長と同等に長い尾」と書いています。ハクビシンの recall は 0.025 → 0.600 → <b>0.750</b>。困っているのは候補の選び方ではなく、<b>画像から特徴を読み取る段階</b>でした。</p>
       </article>
 
       <article class="card">
-        <div class="card-h"><span class="no">CASE 05</span><h3>動物だけ切り抜くと、昼はかえって当たらなくなる</h3><span class="chip day">昼 / COLOR</span><span class="chip ok">元画像は正解</span><span class="chip ng">切り抜きで誤答</span></div>
+        <div class="card-h"><span class="no">CASE 05</span><h3>動物だけ切り抜くと、昼はかえって当たらなくなる</h3><span class="chip day">昼 / COLOR</span><span class="chip ok">元画像は正解</span><span class="chip ng">切り抜きで誤答</span><span class="chip ok">Gemini 正解</span></div>
         <div class="card-b">
           <div class="shot">
             <div class="pair">
@@ -481,9 +502,14 @@
               <span class="said">raccoon（アライグマ） <span class="cf">confidence 0.65</span></span>
               <p class="notes">灰褐色の体毛を持つ小型の哺乳動物が木の根元付近で見られます。体の大きさと毛並みの特徴からアライグマの可能性が高いと判断されますが、画像の解像度と角度により確実性は中程度です。</p>
             </div>
+            <div class="ans right">
+              <span class="run">gemini3-base ・ 元画像を Gemini 3.8 Flash へ ・ 入力 1,278 tok / 出力 77 tok</span>
+              <span class="said">badger <span class="cf">confidence 0.95</span></span>
+              <p class="notes">ニホンアナグマ（アナグマ）1頭が林床を歩行している様子が確認されます。</p>
+            </div>
           </div>
         </div>
-        <p class="takeaway"><b>読みどころ:</b> 切り抜くと被写体は大きくなりますが、<b>周囲の植生と比べた体格という手がかりが消えます</b>。昼の top-1 は 0.793 → 0.748（−4.5pt）、夜は横ばい。検出器（SpeciesNet）自体は優秀（未検出 2%）なので、その価値は「切り抜き」ではなく「動物が写っていない画像を Bedrock に送らない」というコスト削減側に置き直しました。</p>
+        <p class="takeaway"><b>読みどころ:</b> 切り抜くと被写体は大きくなりますが、<b>周囲の植生と比べた体格という手がかりが消えます</b>。昼の top-1 は 0.793 → 0.748（−4.5pt）、夜は横ばい。検出器（SpeciesNet）自体は優秀（未検出 2%）なので、その価値は「切り抜き」ではなく「動物が写っていない画像を生成 AI に送らない」というコスト削減側に置き直しました。</p>
       </article>
 
       <article class="card">
@@ -500,9 +526,14 @@
               <span class="said">animal_present: false <span class="cf">confidence 0.95 ・ count 0</span></span>
               <p class="notes">画像に動物は写っていません。树の枝に赤いベリー（おそらくコマユミの実）と緑色の未熟な果実が写っており、植物のみが対象です。</p>
             </div>
+            <div class="ans right">
+              <span class="run">gemini3-base ・ Gemini 3.8 Flash ・ 入力 1,278 tok / 出力 70 tok</span>
+              <span class="said">animal_present: false <span class="cf">confidence 0.99 ・ count 0</span></span>
+              <p class="notes">ヤマボウシの果実と葉が写っており、動物は確認されません。</p>
+            </div>
           </div>
         </div>
-        <p class="takeaway"><b>読みどころ:</b> 「動物がいるか / いないか」は全 run を通じて合格水準です（最良 run で precision 0.997 / recall 0.982）。未達なのは<b>種の同定</b>だけ — 誤報で人を呼び出す心配は小さい、という意味でもあります。</p>
+        <p class="takeaway"><b>読みどころ:</b> 「動物がいるか / いないか」は全 run を通じて合格水準です（最新 run で precision 0.999 / recall 0.984）。未達なのは<b>種の同定</b>だけ — 誤報で人を呼び出す心配は小さい、という意味でもあります。</p>
       </article>
 
     </div>
@@ -512,23 +543,30 @@
   <div class="wrap">
     <div class="sec-head">
       <span class="eyebrow">04 ・ 結果</span>
-      <h2>本評価・パイロット・対照ベンチ、合わせて 9 run。数字はすべて実測です。</h2>
-      <p>full1 / full2 は 722 枚、iteration 1 以降はスクリーニング後の同一 696 枚。run 間の比較は同じ画像セットどうしで行っています。</p>
+      <h2>本評価・パイロット・対照ベンチ、合わせて 12 run。数字はすべて実測です。</h2>
+      <p>full1 / full2 は 722 枚、iteration 1〜2 と gemini1 はスクリーニング後の同一 696 枚、gemini3-base はそこへクマ 18 枚・シカ 5 枚を足した 719 枚。run 間の比較は同じ画像セットどうしで行っています。</p>
     </div>
 
     <div class="scoll" style="margin-bottom:22px">
       <table class="tbl">
-        <thead><tr><th>run</th><th>日付</th><th>枚数</th><th>やったこと</th><th>top-1</th><th>実費</th></tr></thead>
+        <thead><tr><th>run</th><th>日付</th><th>枚数</th><th>推論先</th><th>やったこと</th><th>top-1</th><th>実費</th></tr></thead>
         <tbody>
-          <tr><td class="mono">full1</td><td class="n">09-02</td><td class="n">722</td><td>指示文 2 文のみ（ベースライン）</td><td class="n">0.544</td><td class="n">—</td></tr>
-          <tr><td class="mono">full2</td><td class="n">09-02</td><td class="n">722</td><td>弁別点チェックリストを追加 <span class="chip ng">逆効果</span></td><td class="n">0.515</td><td class="n">$2.76</td></tr>
-          <tr><td class="mono">iter1-single</td><td class="n">09-06</td><td class="n">696</td><td>夜専用プロンプトへ分岐（B3）</td><td class="n">0.527</td><td class="n">$2.24</td></tr>
-          <tr><td class="mono">iter1-two-step</td><td class="n">09-06</td><td class="n">696</td><td>観察 → 判定の 2 段推論（B2）<span class="chip ng">不採用</span></td><td class="n">0.491</td><td class="n">$4.73</td></tr>
-          <tr><td class="mono">iter2-crop</td><td class="n">09-06</td><td class="n">696</td><td>SpeciesNet で検出 → 切り抜き → 同定（B1）<span class="chip ng">不採用</span></td><td class="n">0.503</td><td class="n">$2.08</td></tr>
-          <tr><td class="mono">iter2-night-sonnet</td><td class="n">09-06</td><td class="n">696</td><td>夜だけ Sonnet 5 へ分岐（B6′）<span class="chip ok">有効</span></td><td class="n"><b>0.649</b></td><td class="n">$4.10</td></tr>
-          <tr><td class="mono">speciesnet</td><td class="n">09-06</td><td class="n">696</td><td>無料 OSS 単体の対照ベンチ（ローカル実行）</td><td class="n">0.213</td><td class="n">$0</td></tr>
+          <tr><td class="mono">full1</td><td class="n">09-02</td><td class="n">722</td><td>Bedrock / Haiku 4.5</td><td>指示文 2 文のみ（ベースライン）</td><td class="n">0.544</td><td class="n">—</td></tr>
+          <tr><td class="mono">full2</td><td class="n">09-02</td><td class="n">722</td><td>Bedrock / Haiku 4.5</td><td>弁別点チェックリストを追加 <span class="chip ng">逆効果</span></td><td class="n">0.515</td><td class="n">$2.76</td></tr>
+          <tr><td class="mono">iter1-single</td><td class="n">09-06</td><td class="n">696</td><td>Bedrock / Haiku 4.5</td><td>夜専用プロンプトへ分岐（B3）</td><td class="n">0.527</td><td class="n">$2.24</td></tr>
+          <tr><td class="mono">iter1-two-step</td><td class="n">09-06</td><td class="n">696</td><td>Bedrock / Haiku 4.5</td><td>観察 → 判定の 2 段推論（B2）<span class="chip ng">不採用</span></td><td class="n">0.491</td><td class="n">$4.73</td></tr>
+          <tr><td class="mono">iter2-crop</td><td class="n">09-06</td><td class="n">696</td><td>Bedrock / Haiku 4.5</td><td>SpeciesNet で検出 → 切り抜き → 同定（B1）<span class="chip ng">不採用</span></td><td class="n">0.503</td><td class="n">$2.08</td></tr>
+          <tr><td class="mono">iter2-night-sonnet</td><td class="n">09-06</td><td class="n">696</td><td>Bedrock / Haiku ＋ 夜 Sonnet 5</td><td>夜だけ上位モデルへ分岐（B6′）<span class="chip ok">有効</span></td><td class="n">0.649</td><td class="n">$4.10</td></tr>
+          <tr><td class="mono">gemini1</td><td class="n">09-22</td><td class="n">696</td><td>Vertex AI / Gemini 3.8 Flash</td><td>推論先の移行。<b>指示文は一切変えず</b> <span class="chip ok">有効</span></td><td class="n">0.855</td><td class="n">$0.92</td></tr>
+          <tr><td class="mono">gemini3-base</td><td class="n">09-22</td><td class="n">719</td><td>Vertex AI / Gemini 3.8 Flash</td><td>重点 2 種を増量し、全種で合否を確定させた <span class="chip ok">最新の正式判定</span></td><td class="n"><b>0.851</b></td><td class="n">$0.96</td></tr>
+          <tr><td class="mono">speciesnet</td><td class="n">09-06</td><td class="n">696</td><td>ローカル実行（無料 OSS）</td><td>対照ベンチ</td><td class="n">0.213</td><td class="n">$0</td></tr>
         </tbody>
       </table>
+    </div>
+
+    <div class="find hi" style="margin-bottom:22px">
+      <h3>推論先を替えただけで、それまでの改善の積み上げを全部超えた</h3>
+      <p>iteration 1〜2 は指示文の作り替え（夜専用プロンプト、観察→判定の 2 段）と切り抜きで top-1 を 0.527 → 0.649 まで動かしました。<b>同じ指示文のまま推論先を Gemini 3.8 Flash に替えただけで 0.855</b>。しかも実費は $4.10 → $0.92 に下がっています。ボトルネックは指示文の書き方ではなく、モデルが画像から特徴を読み取る力でした。</p>
     </div>
 
     <div class="fig" style="margin-bottom:22px">
@@ -539,41 +577,42 @@
         <div class="hrow"><div class="lab">iter1-single<i>夜専用プロンプト</i></div><div class="track"><i class="g" style="left:25%"></i><i class="g" style="left:50%"></i><i class="g" style="left:75%"></i><i class="conn" style="left:16%;width:63.3%"></i><i class="dot n" style="left:16%"></i><i class="dot d" style="left:79.3%"></i></div><div class="val">.160 / .793</div></div>
         <div class="hrow"><div class="lab">iter1-two-step<i>観察→判定</i></div><div class="track"><i class="g" style="left:25%"></i><i class="g" style="left:50%"></i><i class="g" style="left:75%"></i><i class="conn" style="left:13.1%;width:62%"></i><i class="dot n" style="left:13.1%"></i><i class="dot d" style="left:75.1%"></i></div><div class="val">.131 / .751</div></div>
         <div class="hrow"><div class="lab">iter2-crop<i>検出→切り抜き</i></div><div class="track"><i class="g" style="left:25%"></i><i class="g" style="left:50%"></i><i class="g" style="left:75%"></i><i class="conn" style="left:16.4%;width:58.4%"></i><i class="dot n" style="left:16.4%"></i><i class="dot d" style="left:74.8%"></i></div><div class="val">.164 / .748</div></div>
-        <div class="hrow"><div class="lab"><b>iter2-night-sonnet</b><i>夜だけ Sonnet 5</i></div><div class="track"><i class="g" style="left:25%"></i><i class="g" style="left:50%"></i><i class="g" style="left:75%"></i><i class="conn" style="left:47.6%;width:29.8%"></i><i class="dot n" style="left:47.6%"></i><i class="dot d" style="left:77.4%"></i></div><div class="val"><b>.476 / .774</b></div></div>
+        <div class="hrow"><div class="lab">iter2-night-sonnet<i>夜だけ Sonnet 5</i></div><div class="track"><i class="g" style="left:25%"></i><i class="g" style="left:50%"></i><i class="g" style="left:75%"></i><i class="conn" style="left:47.6%;width:29.8%"></i><i class="dot n" style="left:47.6%"></i><i class="dot d" style="left:77.4%"></i></div><div class="val">.476 / .774</div></div>
+        <div class="hrow"><div class="lab"><b>gemini1</b><i>Gemini 3.8 Flash 単独</i></div><div class="track"><i class="g" style="left:25%"></i><i class="g" style="left:50%"></i><i class="g" style="left:75%"></i><i class="conn" style="left:68.7%;width:28.9%"></i><i class="dot n" style="left:68.7%"></i><i class="dot d" style="left:97.6%"></i></div><div class="val"><b>.687 / .976</b></div></div>
         <div class="hrow"><div class="lab">SpeciesNet<i>無料 OSS・参考</i></div><div class="track"><i class="g" style="left:25%"></i><i class="g" style="left:50%"></i><i class="g" style="left:75%"></i><i class="conn" style="left:20.2%;width:2.7%"></i><i class="dot d" style="left:20.2%"></i><i class="dot n" style="left:22.9%"></i></div><div class="val">.229 / .202</div></div>
         <div class="hrow ax"><div class="lab"></div><div class="axis"><span style="left:0">0</span><span style="left:25%">0.25</span><span style="left:50%">0.50</span><span style="left:75%">0.75</span><span style="left:100%">1.00</span></div><div class="val"></div></div>
       </div>
-      <p class="fig-n">昼の top-1 はどの手法でも 0.75〜0.79 でほぼ動かず、夜だけがモデルを替えたときに大きく動きました。full2 は 722 枚のうち iteration 1 と共通の画像だけで再集計した参考値（昼 362 / 夜 251）です。</p>
+      <p class="fig-n">Haiku 系では昼の top-1 がどの手法でも 0.75〜0.79 で頭打ちでしたが、Gemini に替えると昼が 0.976 まで上がり、夜も 0.687 に届きました。<b>指示文は全 run で同一</b>です。full2 は 722 枚のうち iteration 1 と共通の画像だけで再集計した参考値（昼 362 / 夜 251）。最新の gemini3-base は画像を 719 枚へ増やしたセットなのでこの図には含めていません（昼 0.972 / 夜 0.680 と、ほぼ同じ値です）。</p>
     </div>
 
     <div class="grid2">
       <div class="scoll">
         <table class="tbl">
-          <thead><tr><th>Go/No-Go 基準</th><th>目標</th><th>full2（正式判定）</th><th>iter2-night-sonnet</th></tr></thead>
+          <thead><tr><th>Go/No-Go 基準</th><th>目標</th><th>full2（初回）</th><th>gemini3-base（最新）</th></tr></thead>
           <tbody>
-            <tr><td>種同定 top-1 accuracy</td><td class="n">0.700</td><td class="n">0.515 <span class="chip ng">✕</span></td><td class="n">0.649 <span class="chip ng">✕</span></td></tr>
-            <tr><td>animal_present precision</td><td class="n">0.900</td><td class="n">1.000 <span class="chip ok">✓</span></td><td class="n">0.997 <span class="chip ok">✓</span></td></tr>
-            <tr><td>animal_present recall</td><td class="n">0.900</td><td class="n">0.931 <span class="chip ok">✓</span></td><td class="n">0.982 <span class="chip ok">✓</span></td></tr>
-            <tr><td>イノシシ recall</td><td class="n">0.800</td><td class="n">0.378 <span class="chip ng">✕</span></td><td class="n">0.815 <span class="chip ok">✓</span></td></tr>
-            <tr><td>ニホンジカ recall</td><td class="n">0.800</td><td class="n">0.922 <span class="chip ok">✓</span></td><td class="n">0.911 <span class="chip hold">△ n=79</span></td></tr>
-            <tr><td>ニホンザル recall</td><td class="n">0.800</td><td class="n">0.922 <span class="chip ok">✓</span></td><td class="n">0.899 <span class="chip ok">✓</span></td></tr>
-            <tr><td>ツキノワグマ recall</td><td class="n">0.900</td><td class="n">0.303 <span class="chip ng">✕</span></td><td class="n">0.594 <span class="chip hold">△ n=69</span></td></tr>
-            <tr><td>評価データ（陽性）枚数</td><td class="n">500</td><td class="n">682 <span class="chip ok">✓</span></td><td class="n">656 <span class="chip ok">✓</span></td></tr>
+            <tr><td>種同定 top-1 accuracy</td><td class="n">0.700</td><td class="n">0.515 <span class="chip ng">✕</span></td><td class="n">0.851 <span class="chip ok">✓</span></td></tr>
+            <tr><td>animal_present precision</td><td class="n">0.900</td><td class="n">1.000 <span class="chip ok">✓</span></td><td class="n">0.999 <span class="chip ok">✓</span></td></tr>
+            <tr><td>animal_present recall</td><td class="n">0.900</td><td class="n">0.931 <span class="chip ok">✓</span></td><td class="n">0.984 <span class="chip ok">✓</span></td></tr>
+            <tr><td>イノシシ recall</td><td class="n">0.800</td><td class="n">0.378 <span class="chip ng">✕</span></td><td class="n">0.938 <span class="chip ok">✓</span></td></tr>
+            <tr><td>ニホンジカ recall</td><td class="n">0.800</td><td class="n">0.922 <span class="chip ok">✓</span></td><td class="n">1.000 <span class="chip ok">✓</span></td></tr>
+            <tr><td>ニホンザル recall</td><td class="n">0.800</td><td class="n">0.922 <span class="chip ok">✓</span></td><td class="n">1.000 <span class="chip ok">✓</span></td></tr>
+            <tr><td>ツキノワグマ recall</td><td class="n">0.900</td><td class="n">0.303 <span class="chip ng">✕</span></td><td class="n">0.724 <span class="chip ng">✕</span></td></tr>
+            <tr><td>評価データ（陽性）枚数</td><td class="n">500</td><td class="n">682 <span class="chip ok">✓</span></td><td class="n">679 <span class="chip ok">✓</span></td></tr>
           </tbody>
         </table>
       </div>
       <div class="fig">
         <p class="fig-t">AI の自信度は、正解率とよく連動している</p>
         <div class="cols">
-          <div class="col"><span class="cap">.053</span><i class="c" style="height:7px"></i></div>
-          <div class="col"><span class="cap">.000</span><i class="c" style="height:0"></i></div>
-          <div class="col"><span class="cap">.123</span><i class="c" style="height:17px"></i></div>
-          <div class="col"><span class="cap">.311</span><i class="c" style="height:42px"></i></div>
-          <div class="col"><span class="cap">.675</span><i class="c" style="height:91px"></i></div>
-          <div class="col"><span class="cap">.807</span><i class="c" style="height:109px"></i></div>
+          <div class="col"><span class="cap">.026</span><i class="c" style="height:4px"></i></div>
+          <div class="col"><span class="cap">.111</span><i class="c" style="height:15px"></i></div>
+          <div class="col"><span class="cap">.467</span><i class="c" style="height:63px"></i></div>
+          <div class="col"><span class="cap">.542</span><i class="c" style="height:73px"></i></div>
+          <div class="col"><span class="cap">.747</span><i class="c" style="height:101px"></i></div>
+          <div class="col"><span class="cap">.982</span><i class="c" style="height:133px"></i></div>
         </div>
-        <div class="collabs"><span>0–.5<br>n=19</span><span>.5–.6<br>n=7</span><span>.6–.7<br>n=65</span><span>.7–.8<br>n=241</span><span>.8–.9<br>n=117</span><span>.9–1.0<br>n=233</span></div>
-        <p class="fig-n">run full2・陽性 682 枚。横軸が <code>confidence</code>、縦が そのビンでの正解率。自己申告の信頼度は較正が良く、「自信が低いときだけ上位モデルへ回す」設計の土台に使えます。一方 <code>needs_escalation</code> フラグは誤答 331 件のうち 6 件しか拾えず、信号として機能していませんでした。</p>
+        <div class="collabs"><span>0–.5<br>n=38</span><span>.5–.6<br>n=9</span><span>.6–.7<br>n=15</span><span>.7–.8<br>n=24</span><span>.8–.9<br>n=95</span><span>.9–1.0<br>n=494</span></div>
+        <p class="fig-n">run gemini3-base・陽性 679 枚。横軸が <code>confidence</code>、縦がそのビンでの正解率。<b>「自信あり」と言ったときは 98.2% 当たり、「自信がない」と言ったときはほぼ外す</b> — 自己申告の信頼度が素直に当たり外れと連動しています。confidence 0.8 未満はわずか 12.7% で、そこだけ上位モデルへ回す 2 段構成が現実的な選択肢になりました。一方 <code>needs_escalation</code> フラグは Haiku 時代に誤答 331 件のうち 6 件しか拾えず、信号として機能していません。</p>
       </div>
     </div>
   </div>
@@ -587,8 +626,12 @@
     </div>
     <div class="list">
       <div class="find hi">
-        <h3>夜間赤外線の弱点は、指示文ではなくモデル容量の問題だった</h3>
-        <p>同一画像・同一プロンプトで、夜の top-1 は Haiku 4.5 の 0.160 に対し Sonnet 5 で 0.476（+31.6pt）。プロンプト分岐（B3）・2 段推論（B2）・切り抜き（B1）はいずれも夜を 0.13〜0.16 から動かせませんでした。</p>
+        <h3>いちばん効いたのは、指示文の工夫ではなくモデルを替えることだった</h3>
+        <p>夜専用プロンプト・観察→判定の 2 段推論・切り抜きと手を尽くして 0.527 → 0.649。<b>指示文を 1 文字も変えずに推論先を替えたら 0.855</b> でした。同一画像・同一プロンプトで夜の top-1 は 0.160（Haiku 4.5）→ 0.476（夜だけ Sonnet 5）→ 0.687（Gemini 3.8 Flash）。プロンプトエンジニアリングで埋められる差ではありませんでした。</p>
+      </div>
+      <div class="find">
+        <h3>使いたいモデルが「使えない」ことがある — 価格でも精度でもなく、アクセスの問題</h3>
+        <p>この PoC はもともと Claude で設計していましたが、途中で<b>クラウド 2 社とも枠が下りずに実行不能</b>になりました。AWS Bedrock ではアカウント単位の日次トークン上限に当たり、サポート回答は「増枠不可・利用実績が必要」。Google Cloud でも Claude を有効化した上でなおクォータが未割当のままでした。自社モデルである Gemini は新規プロジェクトで即座に動きます。<b>想定している設置者（自治体・個人・小規模検証）は定義上クラウドの利用実績を持たない</b>ので、これは実運用に直結する制約です。推論先はコード上 1 つの環境変数で切り替えられるようにしてあり、枠が下りれば戻せる状態を保っています。</p>
       </div>
       <div class="find">
         <h3>弁別点のチェックリストは、確証バイアスを誘発して精度を下げた</h3>
@@ -601,11 +644,15 @@
       </div>
       <div class="find">
         <h3>日本の種では、無料 OSS に対して明確な差がある</h3>
-        <p>同一 696 枚で SpeciesNet の top-1 は 0.213。イノシシ recall 0.938 と検出寄りの強さはある一方、ニホンジカ 0.063・ニホンザル 0.000・ツキノワグマ 0.000 と日本固有種に弱く、科・属レベルの汎化ラベルへ落ちます。生成 AI 側は 0.649。<b>「検出は OSS、同定は生成 AI」</b>という役割分担が数字で裏づけられました。</p>
+        <p>同一 696 枚で SpeciesNet の top-1 は 0.213。イノシシ recall 0.938 と検出寄りの強さはある一方、ニホンジカ 0.063・ニホンザル 0.000・ツキノワグマ 0.000 と日本固有種に弱く、科・属レベルの汎化ラベルへ落ちます。同じ 696 枚で生成 AI 側は 0.855。<b>「検出は OSS、同定は生成 AI」</b>という役割分担が数字で裏づけられました。</p>
       </div>
       <div class="find">
-        <h3>「動物がいるか」は既に実用水準。足りないのは「どの動物か」</h3>
-        <p>animal_present は precision 0.997 / recall 0.982。count MAE も 0.131。種同定だけが Go 基準に届いていません。</p>
+        <h3>「動物がいるか」は既に実用水準。足りないのは「夜のクマが誰か」</h3>
+        <p>animal_present は precision 0.999 / recall 0.984。種同定も 8 基準中 7 つが目標を超え、残るのはツキノワグマ recall 0.724（目標 0.90）だけです。しかもその内訳は<b>昼 0.925 / 夜 0.553</b>で、外した 24 枚のうち 22 枚は別の種と間違えたのではなく「わからない」と答えたもの。クマを他の動物と取り違えた例は 2 件だけで、<b>クマ警報の誤報はゼロ（precision 1.000）</b>です。</p>
+      </div>
+      <div class="find">
+        <h3>「わからない」と言える設計が、誤報を出さない側に効いている</h3>
+        <p>候補リストに <code>unknown</code> を入れてあるため、判別できない画像でモデルは無理に当てにいきません。実際 confidence 0.5 未満の回答の正解率は 0.026 で、<b>迷っているときのモデルの答えは当てにならない</b>ことが数字で出ています。運用上は「動物はいるが種は不明」として通知され人が確認するので、取りこぼしにはなりません。ツキノワグマ 87 枚のうち <b>82 枚（94.3%）</b>は種が確定できなくても人の目に届きます。</p>
       </div>
     </div>
   </div>
@@ -615,37 +662,37 @@
   <div class="wrap">
     <div class="sec-head">
       <span class="eyebrow">06 ・ 残る課題</span>
-      <h2>次に潰すのは、コストとクマ。</h2>
-      <p>精度を上げる筋は見えました。ここから先は「その精度をいくらで買うか」と「重点種で合否を判定できるデータを揃えられるか」の勝負です。</p>
+      <h2>残るのは、夜のクマ 1 種だけ。</h2>
+      <p>主指標もコストも目標を超え、8 基準中 7 つが合格しました。最後に残った不合格は明確で、「夜の赤外線画像でクマを言い切れない」という 1 点です。</p>
     </div>
     <div class="nexts">
       <div class="next">
-        <span class="pri">PRIORITY 1 ・ コスト</span>
-        <h3>夜を Sonnet 5 に回すと月 ≈3,000 円</h3>
-        <p class="small muted">1 台・100 トリガ/日（月 3,000 回）換算。Haiku 単独なら ≈1,300 円、目標は「月千円台」。</p>
+        <span class="pri">PRIORITY 1 ・ 精度</span>
+        <h3>夜のクマ recall 0.553 を 0.90 へ</h3>
+        <p class="small muted">昼は 0.925 で既に目標超え。全体 0.724（95%CI 0.62–0.81）で、上限が目標を下回るため<b>枚数を足しても合格しません</b>。</p>
         <ul>
-          <li>夜かつ低 confidence のみ Sonnet 5 へ回す 2 段構成（課金なしで机上検証できる）</li>
-          <li>動物なし画像を検出器で事前除外し、呼び出し数そのものを削る</li>
-          <li>プロンプトキャッシュ（共通部を約 1/10 価格に）、評価ランはバッチ推論（50% 引き）</li>
+          <li>夜だけ上位モデルへ固定（切替の仕組みは実装済み・設定 1 行）</li>
+          <li>confidence 0.8 未満の 12.7% だけを上位モデルへ回す 2 段構成</li>
+          <li>棄権基準を緩める案は、較正データ（自信がないときの正解率 0.026）が否定している</li>
         </ul>
       </div>
       <div class="next">
-        <span class="pri">PRIORITY 2 ・ 精度</span>
-        <h3>主指標は目標まであと 5.1pt</h3>
-        <p class="small muted">0.649 → 0.700。夜を上げ切れるかが焦点。</p>
+        <span class="pri">解決済み ・ コスト</span>
+        <h3>月 ≈3,000 円 → ≈600 円</h3>
+        <p class="small muted">1 台・100 トリガ/日（月 3,000 回）換算。1 枚あたり $0.00133 で、目標の「月千円台」に収まりました。</p>
         <ul>
-          <li>昼も Sonnet 5 にした場合の上限を実測（≈$6）</li>
-          <li>夜の棄権基準を緩める（夜の coverage は 0.484 まで落ちていた）</li>
-          <li>種ごとの夜間参照画像を同梱する few-shot、複数回推論の多数決</li>
+          <li>夜だけ上位モデルへ回す案（当時 ≈3,000 円）は、モデル移行だけで不要になった</li>
+          <li>残る手は、動物なし画像を検出器で事前除外して呼び出し数そのものを削ること</li>
+          <li>ただし Gemini 3.x Flash の導入価格は 2026-12-31 まで。以降は約 2 倍で再計算が要る</li>
         </ul>
       </div>
       <div class="next">
-        <span class="pri">PRIORITY 3 ・ データ</span>
-        <h3>クマは精度も枚数も足りない</h3>
-        <p class="small muted">recall 0.594（夜 0.488）、n=69 で合否判定自体が保留。CC0/CC-BY の research grade 在庫は枯渇。</p>
+        <span class="pri">PRIORITY 2 ・ データ</span>
+        <h3>クマの画像はもう増やせない</h3>
+        <p class="small muted">69 → 87 枚まで増やして合否判定は可能になりましたが、日本のツキノワグマは<b>CC0 / CC-BY の在庫が全品質グレードで枯渇</b>しました。</p>
         <ul>
-          <li>quality_grade <code>needs_id</code> を AI スクリーニング込みで使う</li>
           <li>カメラトラップ調査を行う大学・自治体からのデータ提供（最初の顧客開拓の入口でもある）</li>
+          <li>ラベルノイズはまだ残る — 「外した」24 枚のうち数枚は、そもそも写っているのがクマではなかった</li>
         </ul>
       </div>
       <div class="next">
@@ -655,7 +702,7 @@
           <li>人物写り込み（個人情報）の扱い — 野外カメラには登山者・農作業者が必ず写る</li>
           <li>クマ通知の SLO（「検知 → 通知 p95 &lt; 2 分」等の用途別定義）</li>
           <li>自治体 / 研究 / 一般のマルチテナント分離</li>
-          <li>低価格モデル（Amazon Nova Lite）との対照ベンチは未実施</li>
+          <li>推論先を 1 社に依存しない運用（今回の枠の問題が再発しうる）</li>
         </ul>
       </div>
     </div>
@@ -665,7 +712,7 @@
 <footer class="ft">
   <div class="wrap">
     <p class="note">
-      <b>この記録について</b> — 数値はすべて AWS 検証環境（us-east-1）で 2026-09-02 〜 09-06 に実施した評価 run の実測値です。モデルは Amazon Bedrock 上の <span class="mono">claude-haiku-4-5</span> および <span class="mono">claude-sonnet-5</span>。全 run の集計レポートと 1 枚ごとの推論結果は、非公開の実装リポジトリにアーカイブしています。設計の本体（仕様書・実装コード・Terraform）は別リポジトリでプライベート管理しています。
+      <b>この記録について</b> — 数値はすべて 2026-09-02 〜 09-22 に実施した評価 run の実測値です。画像の取り込み・実行制御・記録は AWS（us-east-1）、推論は当初 Amazon Bedrock 上の <span class="mono">claude-haiku-4-5</span> / <span class="mono">claude-sonnet-5</span>、09-22 以降は Google Cloud Vertex AI 上の <span class="mono">gemini-3.8-flash</span> です。パイプラインは変えず、推論先だけを環境変数で差し替えています。1 枚ごとの推論結果は<a href="gallery.html">判定結果ページ</a>で全件公開しており、集計レポートは非公開の実装リポジトリにアーカイブしています。設計の本体（仕様書・実装コード・Terraform）は別リポジトリでプライベート管理しています。
     </p>
     <p class="note" style="margin-top:14px"><b>画像クレジット</b> — 本ページの評価画像は iNaturalist の CC BY ライセンス写真です。</p>
     <ul>
