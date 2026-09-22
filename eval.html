@@ -246,10 +246,10 @@
   <p class="lede">Phase 1 の最大の仮説は「アノテーションなしで、生成 AI が実用精度の種同定をできるか」。クラウド側のパイプラインを組み、ラベル付きの野生動物写真を流し込んで 12 回の評価 run を回しました。実際に投げたプロンプト、実際の画像、AI が返した回答、そして数値をそのまま公開します。<a href="gallery.html">判定結果は 719 枚すべてを 1 枚ずつ公開しています</a>。</p>
   <span class="verdict">判定: NO-GO（8 基準中 7 達成・残り 1）</span>
   <div class="keys">
-    <div class="key"><span class="v">0.851 <small>/ 目標 0.700</small></span><span class="l">種同定 top-1 accuracy。初回の本評価は 0.515 で、主指標は初めて目標を超えた</span></div>
-    <div class="key"><span class="v">0.680 <small>← 0.160</small></span><span class="l">夜間赤外線画像の top-1。指示文は変えず、推論先を替えただけの差</span></div>
+    <div class="key"><span class="v">0.853 <small>/ 目標 0.700</small></span><span class="l">種同定 top-1 accuracy。初回の本評価は 0.515 で、主指標は初めて目標を超えた</span></div>
+    <div class="key"><span class="v">0.683 <small>← 0.160</small></span><span class="l">夜間赤外線画像の top-1。指示文は変えず、推論先を替えただけの差</span></div>
     <div class="key"><span class="v">7 / 8 <small>基準を達成</small></span><span class="l">残る不合格はツキノワグマ recall 0.724（目標 0.90）の 1 つだけ</span></div>
-    <div class="key"><span class="v">$0.96 <small>/ 719 枚</small></span><span class="l">実費。前回の最良 run（$4.10）から 77% 減</span></div>
+    <div class="key"><span class="v">約 $1.85 <small>/ 719 枚</small></span><span class="l">実費。前回の最良 run（$4.10）から 55% 減。1 枚あたり約 0.4 円</span></div>
   </div>
 </div>
 
@@ -533,7 +533,7 @@
             </div>
           </div>
         </div>
-        <p class="takeaway"><b>読みどころ:</b> 「動物がいるか / いないか」は全 run を通じて合格水準です（最新 run で precision 0.999 / recall 0.984）。未達なのは<b>種の同定</b>だけ — 誤報で人を呼び出す心配は小さい、という意味でもあります。</p>
+        <p class="takeaway"><b>読みどころ:</b> 「動物がいるか / いないか」は全 run を通じて合格水準です（最新 run で precision 0.999 / recall 0.990）。未達なのは<b>種の同定</b>だけ — 誤報で人を呼び出す心配は小さい、という意味でもあります。</p>
       </article>
 
     </div>
@@ -558,7 +558,7 @@
           <tr><td class="mono">iter2-crop</td><td class="n">09-06</td><td class="n">696</td><td>Bedrock / Haiku 4.5</td><td>SpeciesNet で検出 → 切り抜き → 同定（B1）<span class="chip ng">不採用</span></td><td class="n">0.503</td><td class="n">$2.08</td></tr>
           <tr><td class="mono">iter2-night-sonnet</td><td class="n">09-06</td><td class="n">696</td><td>Bedrock / Haiku ＋ 夜 Sonnet 5</td><td>夜だけ上位モデルへ分岐（B6′）<span class="chip ok">有効</span></td><td class="n">0.649</td><td class="n">$4.10</td></tr>
           <tr><td class="mono">gemini1</td><td class="n">09-22</td><td class="n">696</td><td>Vertex AI / Gemini 3.8 Flash</td><td>推論先の移行。<b>指示文は一切変えず</b> <span class="chip ok">有効</span></td><td class="n">0.855</td><td class="n">$0.92</td></tr>
-          <tr><td class="mono">gemini3-base</td><td class="n">09-22</td><td class="n">719</td><td>Vertex AI / Gemini 3.8 Flash</td><td>重点 2 種を増量し、全種で合否を確定させた <span class="chip ok">最新の正式判定</span></td><td class="n"><b>0.851</b></td><td class="n">$0.96</td></tr>
+          <tr><td class="mono">gemini3-base</td><td class="n">09-22</td><td class="n">719</td><td>Vertex AI / Gemini 3.8 Flash</td><td>重点 2 種を増量し、全種で合否を確定させた <span class="chip ok">最新の正式判定</span></td><td class="n"><b>0.853</b></td><td class="n">約 $1.85</td></tr>
           <tr><td class="mono">speciesnet</td><td class="n">09-06</td><td class="n">696</td><td>ローカル実行（無料 OSS）</td><td>対照ベンチ</td><td class="n">0.213</td><td class="n">$0</td></tr>
         </tbody>
       </table>
@@ -582,7 +582,7 @@
         <div class="hrow"><div class="lab">SpeciesNet<i>無料 OSS・参考</i></div><div class="track"><i class="g" style="left:25%"></i><i class="g" style="left:50%"></i><i class="g" style="left:75%"></i><i class="conn" style="left:20.2%;width:2.7%"></i><i class="dot d" style="left:20.2%"></i><i class="dot n" style="left:22.9%"></i></div><div class="val">.229 / .202</div></div>
         <div class="hrow ax"><div class="lab"></div><div class="axis"><span style="left:0">0</span><span style="left:25%">0.25</span><span style="left:50%">0.50</span><span style="left:75%">0.75</span><span style="left:100%">1.00</span></div><div class="val"></div></div>
       </div>
-      <p class="fig-n">Haiku 系では昼の top-1 がどの手法でも 0.75〜0.79 で頭打ちでしたが、Gemini に替えると昼が 0.976 まで上がり、夜も 0.687 に届きました。<b>指示文は全 run で同一</b>です。full2 は 722 枚のうち iteration 1 と共通の画像だけで再集計した参考値（昼 362 / 夜 251）。最新の gemini3-base は画像を 719 枚へ増やしたセットなのでこの図には含めていません（昼 0.972 / 夜 0.680 と、ほぼ同じ値です）。</p>
+      <p class="fig-n">Haiku 系では昼の top-1 がどの手法でも 0.75〜0.79 で頭打ちでしたが、Gemini に替えると昼が 0.976 まで上がり、夜も 0.687 に届きました。<b>指示文は全 run で同一</b>です。full2 は 722 枚のうち iteration 1 と共通の画像だけで再集計した参考値（昼 362 / 夜 251）。最新の gemini3-base は画像を 719 枚へ増やしたセットなのでこの図には含めていません（昼 0.972 / 夜 0.683 と、ほぼ同じ値です）。</p>
     </div>
 
     <div class="grid2">
@@ -590,9 +590,9 @@
         <table class="tbl">
           <thead><tr><th>Go/No-Go 基準</th><th>目標</th><th>full2（初回）</th><th>gemini3-base（最新）</th></tr></thead>
           <tbody>
-            <tr><td>種同定 top-1 accuracy</td><td class="n">0.700</td><td class="n">0.515 <span class="chip ng">✕</span></td><td class="n">0.851 <span class="chip ok">✓</span></td></tr>
+            <tr><td>種同定 top-1 accuracy</td><td class="n">0.700</td><td class="n">0.515 <span class="chip ng">✕</span></td><td class="n">0.853 <span class="chip ok">✓</span></td></tr>
             <tr><td>animal_present precision</td><td class="n">0.900</td><td class="n">1.000 <span class="chip ok">✓</span></td><td class="n">0.999 <span class="chip ok">✓</span></td></tr>
-            <tr><td>animal_present recall</td><td class="n">0.900</td><td class="n">0.931 <span class="chip ok">✓</span></td><td class="n">0.984 <span class="chip ok">✓</span></td></tr>
+            <tr><td>animal_present recall</td><td class="n">0.900</td><td class="n">0.931 <span class="chip ok">✓</span></td><td class="n">0.990 <span class="chip ok">✓</span></td></tr>
             <tr><td>イノシシ recall</td><td class="n">0.800</td><td class="n">0.378 <span class="chip ng">✕</span></td><td class="n">0.938 <span class="chip ok">✓</span></td></tr>
             <tr><td>ニホンジカ recall</td><td class="n">0.800</td><td class="n">0.922 <span class="chip ok">✓</span></td><td class="n">1.000 <span class="chip ok">✓</span></td></tr>
             <tr><td>ニホンザル recall</td><td class="n">0.800</td><td class="n">0.922 <span class="chip ok">✓</span></td><td class="n">1.000 <span class="chip ok">✓</span></td></tr>
@@ -607,12 +607,12 @@
           <div class="col"><span class="cap">.026</span><i class="c" style="height:4px"></i></div>
           <div class="col"><span class="cap">.111</span><i class="c" style="height:15px"></i></div>
           <div class="col"><span class="cap">.467</span><i class="c" style="height:63px"></i></div>
-          <div class="col"><span class="cap">.542</span><i class="c" style="height:73px"></i></div>
-          <div class="col"><span class="cap">.747</span><i class="c" style="height:101px"></i></div>
+          <div class="col"><span class="cap">.520</span><i class="c" style="height:70px"></i></div>
+          <div class="col"><span class="cap">.735</span><i class="c" style="height:99px"></i></div>
           <div class="col"><span class="cap">.982</span><i class="c" style="height:133px"></i></div>
         </div>
-        <div class="collabs"><span>0–.5<br>n=38</span><span>.5–.6<br>n=9</span><span>.6–.7<br>n=15</span><span>.7–.8<br>n=24</span><span>.8–.9<br>n=95</span><span>.9–1.0<br>n=494</span></div>
-        <p class="fig-n">run gemini3-base・陽性 679 枚。横軸が <code>confidence</code>、縦がそのビンでの正解率。<b>「自信あり」と言ったときは 98.2% 当たり、「自信がない」と言ったときはほぼ外す</b> — 自己申告の信頼度が素直に当たり外れと連動しています。confidence 0.8 未満はわずか 12.7% で、そこだけ上位モデルへ回す 2 段構成が現実的な選択肢になりました。一方 <code>needs_escalation</code> フラグは Haiku 時代に誤答 331 件のうち 6 件しか拾えず、信号として機能していません。</p>
+        <div class="collabs"><span>0–.5<br>n=38</span><span>.5–.6<br>n=9</span><span>.6–.7<br>n=15</span><span>.7–.8<br>n=25</span><span>.8–.9<br>n=98</span><span>.9–1.0<br>n=494</span></div>
+        <p class="fig-n">run gemini3-base・陽性 679 枚。横軸が <code>confidence</code>、縦がそのビンでの正解率。<b>「自信あり」と言ったときは 98.2% 当たり、「自信がない」と言ったときはほぼ外す</b> — 自己申告の信頼度が素直に当たり外れと連動しています。confidence 0.8 未満はわずか 12.8% で、そこだけ上位モデルへ回す 2 段構成が現実的な選択肢になりました。一方 <code>needs_escalation</code> フラグは Haiku 時代に誤答 331 件のうち 6 件しか拾えず、信号として機能していません。</p>
       </div>
     </div>
   </div>
@@ -647,6 +647,10 @@
         <p>同一 696 枚で SpeciesNet の top-1 は 0.213。イノシシ recall 0.938 と検出寄りの強さはある一方、ニホンジカ 0.063・ニホンザル 0.000・ツキノワグマ 0.000 と日本固有種に弱く、科・属レベルの汎化ラベルへ落ちます。同じ 696 枚で生成 AI 側は 0.855。<b>「検出は OSS、同定は生成 AI」</b>という役割分担が数字で裏づけられました。</p>
       </div>
       <div class="find">
+        <h3>「モデルがたまに変な応答を返す」は、こちらの設定ミスだった</h3>
+        <p>判定が返らず失敗扱いにした画像が 9 枚あり、モデル側の確率的な問題として記録していました。調べ直すと<b>出力トークンの上限が小さすぎた</b>だけでした。このモデルは答えを書く前に「考える」ぶんのトークンを消費しますが、その量は夜の難しい画像で中央値 1,077 トークン。こちらの設定は 1,024 で、考え終わる前に打ち切られていたのです。上限を広げて投げ直すと 12 回中 12 回とも正常に返り、<b>失敗とみなしていた画像の中に正解も混じっていました</b>。同じ理由で実費も 4 倍以上に過少計上していました（$0.96 → 約 $1.85）。応答が返らなかった理由をコードが記録していなかったため、2 回の評価にわたって原因不明のまま数え続けていました。</p>
+      </div>
+      <div class="find">
         <h3>「動物がいるか」は既に実用水準。足りないのは「夜のクマが誰か」</h3>
         <p>animal_present は precision 0.999 / recall 0.984。種同定も 8 基準中 7 つが目標を超え、残るのはツキノワグマ recall 0.724（目標 0.90）だけです。しかもその内訳は<b>昼 0.925 / 夜 0.553</b>で、外した 24 枚のうち 22 枚は別の種と間違えたのではなく「わからない」と答えたもの。クマを他の動物と取り違えた例は 2 件だけで、<b>クマ警報の誤報はゼロ（precision 1.000）</b>です。</p>
       </div>
@@ -672,14 +676,14 @@
         <p class="small muted">昼は 0.925 で既に目標超え。全体 0.724（95%CI 0.62–0.81）で、上限が目標を下回るため<b>枚数を足しても合格しません</b>。</p>
         <ul>
           <li>夜だけ上位モデルへ固定（切替の仕組みは実装済み・設定 1 行）</li>
-          <li>confidence 0.8 未満の 12.7% だけを上位モデルへ回す 2 段構成</li>
+          <li>confidence 0.8 未満の 12.8% だけを上位モデルへ回す 2 段構成</li>
           <li>棄権基準を緩める案は、較正データ（自信がないときの正解率 0.026）が否定している</li>
         </ul>
       </div>
       <div class="next">
         <span class="pri">解決済み ・ コスト</span>
-        <h3>月 ≈3,000 円 → ≈600 円</h3>
-        <p class="small muted">1 台・100 トリガ/日（月 3,000 回）換算。1 枚あたり $0.00133 で、目標の「月千円台」に収まりました。</p>
+        <h3>月 ≈3,000 円 → ≈1,100 円</h3>
+        <p class="small muted">1 台・100 トリガ/日（月 3,000 回）換算。1 枚あたり約 $0.0026 で、目標の「月千円台」に収まりました。</p>
         <ul>
           <li>夜だけ上位モデルへ回す案（当時 ≈3,000 円）は、モデル移行だけで不要になった</li>
           <li>残る手は、動物なし画像を検出器で事前除外して呼び出し数そのものを削ること</li>
