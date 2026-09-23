@@ -232,24 +232,25 @@
       <a href="#input" data-spy="input">入力</a>
       <a href="#examples" data-spy="examples">実例</a>
       <a href="#results" data-spy="results">結果</a>
+      <a href="#fusion" data-spy="fusion">併用</a>
       <a href="#findings" data-spy="findings">わかったこと</a>
-      <a href="#next" data-spy="next">課題</a>
-      <a href="gallery.html" class="btn">判定結果 全719枚</a>
+      <a href="#next" data-spy="next">次の段階</a>
+      <a href="gallery.html" class="btn">判定結果 全716枚</a>
       <a href="index.html" class="btn">提案サマリ</a>
     </nav>
   </div>
 </header>
 
 <div class="wrap head">
-  <span class="eyebrow">Phase 1 Evaluation Log ・ 2026-09-02 → 09-22</span>
+  <span class="eyebrow">Phase 1 Evaluation Log ・ 2026-09-02 → 09-23</span>
   <h1>写真 716 枚を AI に解かせて、<em>どこまで当たるかを測った。</em></h1>
-  <p class="lede">Phase 1 の最大の仮説は「アノテーションなしで、生成 AI が実用精度の種同定をできるか」。クラウド側のパイプラインを組み、ラベル付きの野生動物写真を流し込んで 12 回の評価 run を回しました。実際に投げたプロンプト、実際の画像、AI が返した回答、そして数値をそのまま公開します。<a href="gallery.html">判定結果は 716 枚すべてを 1 枚ずつ公開しています</a>。</p>
-  <span class="verdict">判定: NO-GO（8 基準中 7 達成・残り 1）</span>
+  <p class="lede">Phase 1 の最大の仮説は「アノテーションなしで、生成 AI が実用精度の種同定をできるか」。クラウド側のパイプラインを組み、ラベル付きの野生動物写真を流し込んで 17 回の評価 run を回しました。最後に、生成 AI の「わからない」を無料の OSS 検出器 SpeciesNet で埋める<a href="#fusion">併用構成</a>を実装し、同じ 716 枚で測り直しました。実際に投げたプロンプト、実際の画像、AI が返した回答、そして数値をそのまま公開します。<a href="gallery.html">判定結果は 716 枚すべてを 1 枚ずつ、両判定器の答えつきで公開しています</a>。</p>
+  <span class="verdict">判定: GO（8 基準中 8 達成 ・ Gemini + SpeciesNet 併用、run fusion2）</span>
   <div class="keys">
-    <div class="key"><span class="v">0.857 <small>/ 目標 0.700</small></span><span class="l">種同定 top-1 accuracy。初回の本評価は 0.515 で、主指標は初めて目標を超えた</span></div>
-    <div class="key"><span class="v">0.691 <small>← 0.160</small></span><span class="l">夜間赤外線画像の top-1。指示文は変えず、推論先を替えただけの差</span></div>
-    <div class="key"><span class="v">7 / 8 <small>基準を達成</small></span><span class="l">残る不合格はツキノワグマ recall 0.750（目標 0.90）の 1 つだけ</span></div>
-    <div class="key"><span class="v">約 $1.85 <small>/ 716 枚</small></span><span class="l">実費。前回の最良 run（$4.10）から 55% 減。1 枚あたり約 0.4 円</span></div>
+    <div class="key"><span class="v">0.911 <small>← 0.846</small></span><span class="l">種同定 top-1 accuracy（目標 0.700）。同じ run の Gemini 単独 0.846 に、SpeciesNet 併用で +6.5pt</span></div>
+    <div class="key"><span class="v">0.835 <small>← 0.680</small></span><span class="l">夜間赤外線画像の top-1。Gemini が「わからない」と言った夜の画像を SpeciesNet が埋めた</span></div>
+    <div class="key"><span class="v">8 / 8 <small>基準を達成</small></span><span class="l">最後まで残っていたツキノワグマ recall が 0.762 → 0.905（目標 0.90、95%CI 0.82–0.95）</span></div>
+    <div class="key"><span class="v">約 $2.1 <small>/ 716 枚</small></span><span class="l">実費。生成 AI $1.83 ＋ SpeciesNet Lambda 約 $0.25。1 枚あたり約 0.45 円</span></div>
   </div>
 </div>
 
@@ -288,7 +289,7 @@
         <tbody>
           <tr><td>① 投入</td><td class="mono">S3 raw-media/eval-{runId}/</td><td>画像をアップロードし、正解ラベルを Object Annotation として添付する</td></tr>
           <tr><td>② 起動</td><td class="mono">SQS → EventBridge Pipes</td><td>ObjectCreated を 1 枚ずつ同期起動に変換（失敗は DLQ へ）</td></tr>
-          <tr><td>③ 推論</td><td class="mono">Step Functions → Lambda → Vertex AI</td><td>昼夜を画素から判定 → プロンプトとモデルを選んで生成 AI を呼ぶ</td></tr>
+          <tr><td>③ 推論</td><td class="mono">Step Functions → Lambda ×3</td><td>SpeciesNet（OSS、コンテナ Lambda）で検出・分類 → 昼夜を画素から判定し生成 AI（Vertex AI）を呼ぶ → 6 つの規則で 2 つの答えを融合（<a href="#fusion">併用</a>。09-23 以降）</td></tr>
           <tr><td>④ 記録</td><td class="mono">DynamoDB detections</td><td>条件付き書き込みで重複排除。modelId・promptVersion・トークン数も記録</td></tr>
           <tr><td>⑤ 採点</td><td class="mono">scripts/score_eval.py</td><td>封をした正解と突き合わせ、Markdown / CSV / HTML のレポートを生成</td></tr>
         </tbody>
@@ -543,8 +544,8 @@
   <div class="wrap">
     <div class="sec-head">
       <span class="eyebrow">04 ・ 結果</span>
-      <h2>本評価・パイロット・対照ベンチ、合わせて 12 run。数字はすべて実測です。</h2>
-      <p>full1 / full2 は 722 枚、iteration 1〜2 と gemini1 はスクリーニング後の同一 696 枚、gemini3-base はそこへクマ 18 枚・シカ 5 枚を足し、正解ラベルの誤り 3 枚を除いた 716 枚。run 間の比較は同じ画像セットどうしで行っています。</p>
+      <h2>本評価・パイロット・対照ベンチ、合わせて 17 run。数字はすべて実測です。</h2>
+      <p>full1 / full2 は 722 枚、iteration 1〜2 と gemini1 はスクリーニング後の同一 696 枚、gemini3-base 以降はそこへクマ 18 枚・シカ 5 枚を足し、正解ラベルの誤り 3 枚を除いた 716 枚。swg 系は海外の実トレイルカメラ画像（別枠の「トレイルカメラ層」）。run 間の比較は同じ画像セットどうしで行っています。</p>
     </div>
 
     <div class="scoll" style="margin-bottom:22px">
@@ -558,8 +559,13 @@
           <tr><td class="mono">iter2-crop</td><td class="n">09-06</td><td class="n">696</td><td>Bedrock / Haiku 4.5</td><td>SpeciesNet で検出 → 切り抜き → 同定（B1）<span class="chip ng">不採用</span></td><td class="n">0.503</td><td class="n">$2.08</td></tr>
           <tr><td class="mono">iter2-night-sonnet</td><td class="n">09-06</td><td class="n">696</td><td>Bedrock / Haiku ＋ 夜 Sonnet 5</td><td>夜だけ上位モデルへ分岐（B6′）<span class="chip ok">有効</span></td><td class="n">0.649</td><td class="n">$4.10</td></tr>
           <tr><td class="mono">gemini1</td><td class="n">09-22</td><td class="n">696</td><td>Vertex AI / Gemini 3.8 Flash</td><td>推論先の移行。<b>指示文は一切変えず</b> <span class="chip ok">有効</span></td><td class="n">0.855</td><td class="n">$0.92</td></tr>
-          <tr><td class="mono">gemini3-base</td><td class="n">09-22</td><td class="n">716</td><td>Vertex AI / Gemini 3.8 Flash</td><td>重点 2 種を増量し、全種で合否を確定させた <span class="chip ok">最新の正式判定</span></td><td class="n"><b>0.857</b></td><td class="n">約 $1.85</td></tr>
-          <tr><td class="mono">speciesnet</td><td class="n">09-06</td><td class="n">696</td><td>ローカル実行（無料 OSS）</td><td>対照ベンチ</td><td class="n">0.213</td><td class="n">$0</td></tr>
+          <tr><td class="mono">gemini3-base</td><td class="n">09-22</td><td class="n">716</td><td>Vertex AI / Gemini 3.8 Flash</td><td>重点 2 種を増量し、全種で合否を確定させた <span class="chip ok">Gemini 単独の正式判定</span></td><td class="n"><b>0.857</b></td><td class="n">約 $1.85</td></tr>
+          <tr><td class="mono">speciesnet</td><td class="n">09-06</td><td class="n">696</td><td>ローカル実行（無料 OSS）</td><td>対照ベンチ。写像を公平にして再採点すると 0.790（<a href="#fusion">併用</a>参照）</td><td class="n">0.213 → 0.790</td><td class="n">$0</td></tr>
+          <tr><td class="mono">swg1</td><td class="n">09-22</td><td class="n">294</td><td>Vertex AI / Gemini 3.8 Flash</td><td>海外の実トレイルカメラ画像（ベトナム・ラオス）で同構成。iNat 写真が製品の入力を代表しない疑いを確認</td><td class="n">0.323<br><small class="muted">可視 245 枚で 0.388</small></td><td class="n">$0.38</td></tr>
+          <tr><td class="mono">swg2</td><td class="n">09-23</td><td class="n">245</td><td>Vertex AI / Gemini 3.8 Flash</td><td>棄権基準を緩めたプロンプト変種。棄権が誤認に置き換わるだけ <span class="chip ng">不採用</span></td><td class="n">0.555</td><td class="n">$0.35</td></tr>
+          <tr><td class="mono">fusion1</td><td class="n">09-23</td><td class="n">716</td><td>Gemini 3.8 Flash ＋ SpeciesNet</td><td>併用の初回。投入を絞らず Lambda の同時実行上限に当たり、SpeciesNet が 30% の画像で走らなかった <span class="chip ng">教訓</span></td><td class="n">0.904</td><td class="n">約 $2.1</td></tr>
+          <tr><td class="mono">fusion2</td><td class="n">09-23</td><td class="n">716</td><td>Gemini 3.8 Flash ＋ SpeciesNet</td><td>併用の正式測定。2 つの答えを 6 つの規則で融合。同 run の Gemini 単独値は 0.846 <span class="chip ok">最新の正式判定</span></td><td class="n"><b>0.911</b></td><td class="n">約 $2.1</td></tr>
+          <tr><td class="mono">fusion2-swg</td><td class="n">09-23</td><td class="n">245</td><td>Gemini 3.8 Flash ＋ SpeciesNet</td><td>トレイルカメラ層で同構成。Gemini 単独 0.396 → 併用 0.751 <span class="chip ok">有効</span></td><td class="n"><b>0.751</b></td><td class="n">約 $0.9</td></tr>
         </tbody>
       </table>
     </div>
@@ -588,16 +594,16 @@
     <div class="grid2">
       <div class="scoll">
         <table class="tbl">
-          <thead><tr><th>Go/No-Go 基準</th><th>目標</th><th>full2（初回）</th><th>gemini3-base（最新）</th></tr></thead>
+          <thead><tr><th>Go/No-Go 基準</th><th>目標</th><th>full2（初回）</th><th>gemini3-base（Gemini 単独）</th><th>fusion2（併用・最新）</th></tr></thead>
           <tbody>
-            <tr><td>種同定 top-1 accuracy</td><td class="n">0.700</td><td class="n">0.515 <span class="chip ng">✕</span></td><td class="n">0.857 <span class="chip ok">✓</span></td></tr>
-            <tr><td>animal_present precision</td><td class="n">0.900</td><td class="n">1.000 <span class="chip ok">✓</span></td><td class="n">0.999 <span class="chip ok">✓</span></td></tr>
-            <tr><td>animal_present recall</td><td class="n">0.900</td><td class="n">0.931 <span class="chip ok">✓</span></td><td class="n">0.991 <span class="chip ok">✓</span></td></tr>
-            <tr><td>イノシシ recall</td><td class="n">0.800</td><td class="n">0.378 <span class="chip ng">✕</span></td><td class="n">0.938 <span class="chip ok">✓</span></td></tr>
-            <tr><td>ニホンジカ recall</td><td class="n">0.800</td><td class="n">0.922 <span class="chip ok">✓</span></td><td class="n">1.000 <span class="chip ok">✓</span></td></tr>
-            <tr><td>ニホンザル recall</td><td class="n">0.800</td><td class="n">0.922 <span class="chip ok">✓</span></td><td class="n">1.000 <span class="chip ok">✓</span></td></tr>
-            <tr><td>ツキノワグマ recall</td><td class="n">0.900</td><td class="n">0.303 <span class="chip ng">✕</span></td><td class="n">0.750 <span class="chip ng">✕</span></td></tr>
-            <tr><td>評価データ（陽性）枚数</td><td class="n">500</td><td class="n">682 <span class="chip ok">✓</span></td><td class="n">676 <span class="chip ok">✓</span></td></tr>
+            <tr><td>種同定 top-1 accuracy</td><td class="n">0.700</td><td class="n">0.515 <span class="chip ng">✕</span></td><td class="n">0.857 <span class="chip ok">✓</span></td><td class="n"><b>0.911</b> <span class="chip ok">✓</span></td></tr>
+            <tr><td>animal_present precision</td><td class="n">0.900</td><td class="n">1.000 <span class="chip ok">✓</span></td><td class="n">0.999 <span class="chip ok">✓</span></td><td class="n">0.991 <span class="chip ok">✓</span></td></tr>
+            <tr><td>animal_present recall</td><td class="n">0.900</td><td class="n">0.931 <span class="chip ok">✓</span></td><td class="n">0.991 <span class="chip ok">✓</span></td><td class="n">0.988 <span class="chip ok">✓</span></td></tr>
+            <tr><td>イノシシ recall</td><td class="n">0.800</td><td class="n">0.378 <span class="chip ng">✕</span></td><td class="n">0.938 <span class="chip ok">✓</span></td><td class="n">0.975 <span class="chip ok">✓</span></td></tr>
+            <tr><td>ニホンジカ recall</td><td class="n">0.800</td><td class="n">0.922 <span class="chip ok">✓</span></td><td class="n">1.000 <span class="chip ok">✓</span></td><td class="n">1.000 <span class="chip ok">✓</span></td></tr>
+            <tr><td>ニホンザル recall</td><td class="n">0.800</td><td class="n">0.922 <span class="chip ok">✓</span></td><td class="n">1.000 <span class="chip ok">✓</span></td><td class="n">1.000 <span class="chip ok">✓</span></td></tr>
+            <tr><td>ツキノワグマ recall</td><td class="n">0.900</td><td class="n">0.303 <span class="chip ng">✕</span></td><td class="n">0.750 <span class="chip ng">✕</span></td><td class="n"><b>0.905</b> <span class="chip ok">✓</span><br><small class="muted">95%CI 0.82–0.95</small></td></tr>
+            <tr><td>評価データ（陽性）枚数</td><td class="n">500</td><td class="n">682 <span class="chip ok">✓</span></td><td class="n">676 <span class="chip ok">✓</span></td><td class="n">676 <span class="chip ok">✓</span></td></tr>
           </tbody>
         </table>
       </div>
@@ -618,10 +624,89 @@
   </div>
 </section>
 
+<section class="sec" id="fusion">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="eyebrow">05 ・ 併用</span>
+      <h2>生成 AI の「わからない」を、無料の検出器で埋めた。</h2>
+      <p>夜の赤外線画像で Gemini は無理に当てにいかず「わからない」と言います（誤報を出さない設計の裏側）。その穴を、トレイルカメラ写真だけで学習された Google の OSS モデル <b>SpeciesNet</b>（Apache-2.0、Lambda コンテナで自前実行）で埋める構成を実装しました。2 人の鑑定士の答えを 6 つの規則で 1 つにまとめる審判が <code>fuse</code> Lambda で、規則はコード上 1 か所（純関数）にしかありません。</p>
+    </div>
+
+    <div class="grid2" style="margin-bottom:22px">
+      <div class="panel">
+        <h3>なぜ効くのか — 一致したときの正解率 0.996</h3>
+        <div class="kv"><span class="kk">同じ 696 枚で</span><span class="vv">Gemini 0.855 / SpeciesNet 0.790（写像を公平にして再採点）</span></div>
+        <div class="kv"><span class="kk">得意が逆</span><span class="vv">Gemini は昼 0.976、SpeciesNet は夜 0.796</span></div>
+        <div class="kv"><span class="kk">2 人が一致</span><span class="vv">全体の 70%。その正解率は <b>0.996</b>（iNat）/ 1.000（SWG）</span></div>
+        <div class="kv"><span class="kk">2 人が割れる</span><span class="vv">8%。どちらが正しいかは五分で、ここだけ保留（エスカレーション対象）にする</span></div>
+        <p class="small muted" style="margin-top:12px">「一致したら信じる、割れたら保留、片方が黙ったらもう片方」— 規則はこれだけです。重み付き投票や学習済みメタ分類器は作っていません。</p>
+      </div>
+      <div class="panel">
+        <h3>6 つの規則と、iNat 716 枚での内訳</h3>
+        <div class="scoll">
+          <table class="tbl">
+            <thead><tr><th>#</th><th>状況</th><th>最終判定</th><th>件数</th><th>正解率</th></tr></thead>
+            <tbody>
+              <tr><td class="n">2</td><td>2 人が同じ種</td><td>その種</td><td class="n">477（70.6%）</td><td class="n"><b>0.996</b></td></tr>
+              <tr><td class="n">3</td><td>Gemini が棄権、SpeciesNet は種を言う</td><td>SpeciesNet の種</td><td class="n">47（7.0%）</td><td class="n">0.830</td></tr>
+              <tr><td class="n">4</td><td>違う種を言う</td><td>昼は Gemini、夜は SpeciesNet を暫定採用 <span class="chip">保留</span></td><td class="n">56（8.3%）</td><td class="n">0.679</td></tr>
+              <tr><td class="n">5</td><td>2 人とも言えない</td><td>unknown <span class="chip">保留</span></td><td class="n">26（3.8%）</td><td class="n">—</td></tr>
+              <tr><td class="n">6</td><td>Gemini のみ（SpeciesNet が写像不能）</td><td>Gemini の種</td><td class="n">70（10.4%）</td><td class="n">0.914</td></tr>
+              <tr><td class="n">1</td><td>検出器が動物なし・Gemini 未実行</td><td>動物なし</td><td class="n">—</td><td class="n">（評価では Gemini を全枚数に呼ぶため未使用）</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="small muted" style="margin-top:12px">陽性 676 枚。「保留」の 2 規則は上位モデルか人へ回す印（エスカレーション）を付けており、iNat で 13.3%、トレイルカメラ層で 28.6% でした。</p>
+      </div>
+    </div>
+
+    <div class="scoll" style="margin-bottom:22px">
+      <table class="tbl">
+        <thead><tr><th>セット</th><th>アーム</th><th>top-1</th><th>coverage（判定率）</th><th>昼</th><th>夜</th><th>クマ recall</th><th>エスカレーション</th></tr></thead>
+        <tbody>
+          <tr><td rowspan="2">iNat 716 枚<br><small class="muted">run fusion2</small></td><td>Gemini 単独（同 run）</td><td class="n">0.846</td><td class="n">0.892</td><td class="n">0.962</td><td class="n">0.680</td><td class="n">0.762</td><td class="n">—</td></tr>
+          <tr><td><b>Gemini ＋ SpeciesNet</b></td><td class="n"><b>0.911</b></td><td class="n">0.962</td><td class="n">0.965</td><td class="n"><b>0.835</b></td><td class="n"><b>0.905</b></td><td class="n">95 枚（13.3%）</td></tr>
+          <tr><td rowspan="2">海外トレイルカメラ 245 枚<br><small class="muted">run fusion2-swg</small></td><td>Gemini 単独（同 run）</td><td class="n">0.396</td><td class="n">0.531</td><td class="n">0.427</td><td class="n">0.353</td><td class="n">0.435</td><td class="n">—</td></tr>
+          <tr><td><b>Gemini ＋ SpeciesNet</b></td><td class="n"><b>0.751</b></td><td class="n">0.918</td><td class="n">0.699</td><td class="n"><b>0.824</b></td><td class="n">0.726</td><td class="n">70 枚（28.6%）</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="fig" style="margin-bottom:22px">
+      <p class="fig-t">併用で動いたのは、ほぼ夜だけ</p>
+      <div class="legend"><span><i class="sw d"></i>昼・カラー</span><span><i class="sw n"></i>夜・赤外線</span></div>
+      <div class="hchart">
+        <div class="hrow"><div class="lab">Gemini 単独<i>iNat 716（昼 398 / 夜 278）</i></div><div class="track"><i class="g" style="left:25%"></i><i class="g" style="left:50%"></i><i class="g" style="left:75%"></i><i class="conn" style="left:68%;width:28.2%"></i><i class="dot n" style="left:68%"></i><i class="dot d" style="left:96.2%"></i></div><div class="val">.680 / .962</div></div>
+        <div class="hrow"><div class="lab"><b>Gemini ＋ SpeciesNet</b><i>iNat 716</i></div><div class="track"><i class="g" style="left:25%"></i><i class="g" style="left:50%"></i><i class="g" style="left:75%"></i><i class="conn" style="left:83.5%;width:13%"></i><i class="dot n" style="left:83.5%"></i><i class="dot d" style="left:96.5%"></i></div><div class="val"><b>.835 / .965</b></div></div>
+        <div class="hrow"><div class="lab">Gemini 単独<i>海外トレイルカメラ 245（昼 143 / 夜 102）</i></div><div class="track"><i class="g" style="left:25%"></i><i class="g" style="left:50%"></i><i class="g" style="left:75%"></i><i class="conn" style="left:35.3%;width:7.4%"></i><i class="dot n" style="left:35.3%"></i><i class="dot d" style="left:42.7%"></i></div><div class="val">.353 / .427</div></div>
+        <div class="hrow"><div class="lab"><b>Gemini ＋ SpeciesNet</b><i>海外トレイルカメラ 245</i></div><div class="track"><i class="g" style="left:25%"></i><i class="g" style="left:50%"></i><i class="g" style="left:75%"></i><i class="conn" style="left:69.9%;width:12.5%"></i><i class="dot d" style="left:69.9%"></i><i class="dot n" style="left:82.4%"></i></div><div class="val"><b>.824 / .699</b></div></div>
+        <div class="hrow ax"><div class="lab"></div><div class="axis"><span style="left:0">0</span><span style="left:25%">0.25</span><span style="left:50%">0.50</span><span style="left:75%">0.75</span><span style="left:100%">1.00</span></div><div class="val"></div></div>
+      </div>
+      <p class="fig-n">昼は Gemini 単独で既に 0.96 あり、併用しても変わりません。夜は Gemini の棄権を SpeciesNet が埋めて 0.680 → 0.835。実際のトレイルカメラ画像（至近距離の部分写り・赤外線の白飛び）では Gemini が半数近くを棄権するため、併用の効果は +35pt と iNat よりはるかに大きく、夜は昼を上回りました。</p>
+    </div>
+
+    <div class="grid2">
+      <div class="find">
+        <h3>ツキノワグマは 0.762 → 0.905 で、最後の基準を越えた</h3>
+        <p>Phase 1 で唯一残っていた不合格が、夜のクマの棄権でした。クマ 84 枚のうち Gemini が「わからない」と言った画像の多くを SpeciesNet が <code>ursidae family</code>（クマ科）と判定し、日本では 1 種に定まるので写像でツキノワグマに落としています。95%CI は 0.82–0.95 で、点推定は目標を超えましたが下限はまだ届いていません。判定基準の運用どおり点推定で合否を付けています。</p>
+      </div>
+      <div class="find">
+        <h3>後退した種もある — タヌキ 0.553 → 0.421</h3>
+        <p>SpeciesNet はタヌキをアライグマ寄りに判定し、夜の不一致で SpeciesNet を採る規則がそれを通しました。裏返しでアライグマの recall は 0.395 → 0.974。同所的な中型獣の境界がどちらの判定器を信じるかで動く典型で、写像と規則 4 の見直し対象です。全 716 枚の内訳は<a href="gallery.html">判定結果ページ</a>で、カードごとに Gemini と SpeciesNet それぞれの答えと決め方（規則番号）を確認できます。</p>
+      </div>
+    </div>
+
+    <div class="find" style="margin-top:16px">
+      <h3>動かして分かった、机上検証では見えなかった 3 つ</h3>
+      <p><b>① Graviton（arm64）では動かない。</b> PyTorch が Lambda の隔離環境で CPU 情報を読めず <code>Failed to initialize cpuinfo!</code> で落ちる。手元の arm64 Docker では正常に動くため、Lambda 上で初めて分かりました。x86_64 に作り直しています。<b>② 失敗は静かに隠れる。</b> SpeciesNet が落ちても Gemini 単独で書き続ける設計にしてあるため、最初のスモークは「通ったように見えた」だけで、属性を見ると 6 枚全部が SpeciesNet なしでした。<b>③ 同時実行の取り合い。</b> 1 枚が 3 つの Lambda を順に占有するので、716 枚を一気に投入した run fusion1 では同時実行上限 10 の取り合いで 30% の画像で SpeciesNet が走らず、投入を 30 枚/分に絞った fusion2 で欠落 0.7% になりました。運用面の実測は、SpeciesNet が 1 枚 7 秒（3GB・約 1.7 vCPU）、コールドスタートはイメージ読み込みで 90〜180 秒です。</p>
+    </div>
+  </div>
+</section>
+
 <section class="sec" id="findings">
   <div class="wrap">
     <div class="sec-head">
-      <span class="eyebrow">05 ・ わかったこと</span>
+      <span class="eyebrow">06 ・ わかったこと</span>
       <h2>効いた手と、効かなかった手。</h2>
     </div>
     <div class="list">
@@ -640,19 +725,19 @@
       </div>
       <div class="find">
         <h3>被写体を切り抜くと、昼は逆に当たらなくなる</h3>
-        <p>周囲の植生に対する体格という文脈が失われるため（昼 −4.5pt、夜 ±0）。検出器そのものは優秀（未検出 2%）なので、価値は「動物なし画像の事前除外によるコスト削減」に置き直しました。</p>
+        <p>周囲の植生に対する体格という文脈が失われるため（昼 −4.5pt、夜 ±0）。検出器そのものは優秀（未検出 2%）なので、切り抜きの前処理ではなく<a href="#fusion">第二の判定器として併用</a>する形で価値を回収しました。</p>
       </div>
       <div class="find">
-        <h3>日本の種では、無料 OSS に対して明確な差がある</h3>
-        <p>同一 696 枚で SpeciesNet の top-1 は 0.213。イノシシ recall 0.938 と検出寄りの強さはある一方、ニホンジカ 0.063・ニホンザル 0.000・ツキノワグマ 0.000 と日本固有種に弱く、科・属レベルの汎化ラベルへ落ちます。同じ 696 枚で生成 AI 側は 0.855。<b>「検出は OSS、同定は生成 AI」</b>という役割分担が数字で裏づけられました。</p>
+        <h3>無料 OSS は「弱い」のではなく、測り方が不公平だった</h3>
+        <p>当初、同一 696 枚で SpeciesNet の top-1 は 0.213 と記録していました。しかし SpeciesNet は確信が無いと <code>cervidae family</code>（シカ科）のような科・属レベルの答えを返し、それを不正解に数えていたのが原因です。日本では科が 1 種に定まる場合が多いので、生成 AI 側に与えているのと同じ「地理的一意性」を写像で与えて採点し直すと <b>0.790</b>。Gemini（0.855）と互角で、得意が逆（Gemini は昼、SpeciesNet は夜）でした。この発見が<a href="#fusion">併用</a>の出発点です。</p>
       </div>
       <div class="find">
         <h3>「モデルがたまに変な応答を返す」は、こちらの設定ミスだった</h3>
         <p>判定が返らず失敗扱いにした画像が 9 枚あり、モデル側の確率的な問題として記録していました。調べ直すと<b>出力トークンの上限が小さすぎた</b>だけでした。このモデルは答えを書く前に「考える」ぶんのトークンを消費しますが、その量は夜の難しい画像で中央値 1,077 トークン。こちらの設定は 1,024 で、考え終わる前に打ち切られていたのです。上限を広げて投げ直すと 12 回中 12 回とも正常に返り、<b>失敗とみなしていた画像の中に正解も混じっていました</b>。同じ理由で実費も 4 倍以上に過少計上していました（$0.96 → 約 $1.85）。応答が返らなかった理由をコードが記録していなかったため、2 回の評価にわたって原因不明のまま数え続けていました。</p>
       </div>
       <div class="find">
-        <h3>「動物がいるか」は既に実用水準。足りないのは「夜のクマが誰か」</h3>
-        <p>animal_present は precision 0.999 / recall 0.984。種同定も 8 基準中 7 つが目標を超え、残るのはツキノワグマ recall 0.750（目標 0.90）だけです。しかもその内訳は<b>昼 0.925 / 夜 0.591</b>で、外した 21 枚のうち 19 枚は別の種と間違えたのではなく「わからない」と答えたもの。クマを他の動物と取り違えた例は 2 件だけで、<b>クマ警報の誤報はゼロ（precision 1.000）</b>です。</p>
+        <h3>「動物がいるか」は既に実用水準。最後まで残ったのは「夜のクマが誰か」だった</h3>
+        <p>animal_present は precision 0.999 / recall 0.991。Gemini 単独では種同定の 8 基準中 7 つが目標を超え、残るのはツキノワグマ recall 0.750（目標 0.90）だけでした。その内訳は<b>昼 0.925 / 夜 0.591</b>で、外した 21 枚のうち 19 枚は別の種と間違えたのではなく「わからない」と答えたもの。クマを他の動物と取り違えた例は 2 件だけで、<b>クマ警報の誤報はゼロ（precision 1.000）</b>。この「棄権」を SpeciesNet で埋めるのが<a href="#fusion">併用</a>で、クマ recall は 0.905 になりました。</p>
       </div>
       <div class="find">
         <h3>「わからない」と言える設計が、誤報を出さない側に効いている</h3>
@@ -665,48 +750,59 @@
 <section class="sec" id="next">
   <div class="wrap">
     <div class="sec-head">
-      <span class="eyebrow">06 ・ 残る課題</span>
-      <h2>残るのは、夜のクマ 1 種だけ。</h2>
-      <p>主指標もコストも目標を超え、8 基準中 7 つが合格しました。最後に残った不合格は明確で、「夜の赤外線画像でクマを言い切れない」という 1 点です。</p>
+      <span class="eyebrow">07 ・ 次の段階</span>
+      <h2>Phase 1 は GO。次は「保留」を人と上位モデルへ流す仕組みと、閲覧の入口。</h2>
+      <p>「アノテーションなしで実用精度の種同定ができるか」という最大の仮説は、生成 AI と OSS 検出器の併用で 8 基準すべてを満たしました。残った不確実性は精度の絶対値ではなく、<b>保留になった 13〜29% をどう処理するか</b>と、<b>実際のトレイルカメラ画像でどこまで再現するか</b>の 2 つです。Phase 2 はこの 2 つを潰す段階として定義します。</p>
     </div>
     <div class="nexts">
       <div class="next">
-        <span class="pri">PRIORITY 1 ・ 精度</span>
-        <h3>夜のクマ recall 0.591 を 0.90 へ</h3>
-        <p class="small muted">昼は 0.925 で既に目標超え。全体 0.750（95%CI 0.65–0.83）で、上限が目標を下回るため<b>枚数を足しても合格しません</b>。</p>
+        <span class="pri">PHASE 2-A ・ エスカレーション</span>
+        <h3>保留 13〜29% の行き先を作る</h3>
+        <p class="small muted">2 人が割れた（規則 4）・2 人とも言えない（規則 5）画像には印が付いています。iNat 95 枚（13.3%）、トレイルカメラ層 70 枚（28.6%）。規則 4 の正解率は 0.68 / 0.18 なので、ここに手を入れる価値が最も大きい。</p>
         <ul>
-          <li>夜だけ上位モデルへ固定（切替の仕組みは実装済み・設定 1 行）</li>
-          <li>confidence 0.8 未満の 12.7% だけを上位モデルへ回す 2 段構成</li>
-          <li>棄権基準を緩める案は、較正データ（自信がないときの正解率 0.026）が否定している</li>
+          <li>上位モデル（Gemini の上位版）に 2 回目の判定を頼む分岐を Step Functions に足す。分岐点と印は実装済み、呼び先の Lambda と認証の拡張が未実装</li>
+          <li>それでも決まらない画像は「動物はいるが種は不明」として人に通知する。誤報を出さずに取りこぼしも出さない現行の設計をそのまま使う</li>
+          <li>費用の上限: 保留 25% を上位モデルへ回しても月 3,000 枚で約 $3 の追加</li>
         </ul>
       </div>
       <div class="next">
-        <span class="pri">解決済み ・ コスト</span>
-        <h3>月 ≈3,000 円 → ≈1,100 円</h3>
-        <p class="small muted">1 台・100 トリガ/日（月 3,000 回）換算。1 枚あたり約 $0.0026 で、目標の「月千円台」に収まりました。</p>
+        <span class="pri">PHASE 2-B ・ 閲覧</span>
+        <h3>結果を見る入口（Web ビューア）</h3>
+        <p class="small muted">DynamoDB には 1 枚ごとに最終判定・両判定器の答え・決め方・確信度が入っています。これを人が見て直せる画面が、次の顧客対話の道具になります。</p>
         <ul>
-          <li>夜だけ上位モデルへ回す案（当時 ≈3,000 円）は、モデル移行だけで不要になった</li>
-          <li>残る手は、動物なし画像を検出器で事前除外して呼び出し数そのものを削ること</li>
-          <li>ただし Gemini 3.x Flash の導入価格は 2026-12-31 まで。以降は約 2 倍で再計算が要る</li>
+          <li>S3 + CloudFront + Cognito + API Gateway の最小構成。種・日付・保留のフィルタ</li>
+          <li>「保留」画像を人が確定する操作を、将来の few-shot 参照画像（画像 RAG）の入口にする</li>
+          <li>クマ通知の SLO（検知 → 通知 p95 &lt; 2 分）を先に決め、通知経路（SNS / メール）をここで実装する</li>
         </ul>
       </div>
       <div class="next">
-        <span class="pri">PRIORITY 2 ・ データ</span>
-        <h3>クマの画像はもう増やせない</h3>
-        <p class="small muted">69 → 84 枚まで増やして合否判定は可能になりましたが、日本のツキノワグマは<b>CC0 / CC-BY の在庫が全品質グレードで枯渇</b>しました。</p>
+        <span class="pri">PRIORITY ・ データ</span>
+        <h3>国内トレイルカメラ画像で測り直す</h3>
+        <p class="small muted">iNaturalist の写真は製品の入力（至近距離・部分写り・赤外線）を代表しません。海外の実トレイルカメラでは Gemini 単独 0.396 でした。国内の実画像で同じ 2 アーム評価を再現するのが、Go を「本物」にする条件です。</p>
         <ul>
-          <li>カメラトラップ調査を行う大学・自治体からのデータ提供（最初の顧客開拓の入口でもある）</li>
-          <li>正解ラベルの誤りを 3 枚除外した（動物なし / シカ / 鳥類）。残る候補も目視で確認済み</li>
+          <li>Snapshot Japan 2023（国立環境研究所ほか、CC BY 4.0）の 1,050 フレームを事務局へ提供依頼中。依頼リストは作成済み</li>
+          <li>並行して自前撮影（中古端末または市販トレイルカメラを協力者の山林へ 1〜2 か月）。製品の入力そのもの</li>
+          <li>ツキノワグマは CC0 / CC-BY の在庫が枯渇。研究機関からの提供が最初の顧客開拓の入口でもある</li>
         </ul>
       </div>
       <div class="next">
-        <span class="pri">Phase 2 の前に</span>
+        <span class="pri">運用 ・ コスト</span>
+        <h3>1 枚 ≈ $0.003、月 3,000 枚で約 1,300 円</h3>
+        <p class="small muted">生成 AI $0.0026 ＋ SpeciesNet（Lambda 3GB・7 秒）$0.0003。目標の「月千円台」に収まります。</p>
+        <ul>
+          <li>Gemini の出力トークンが 1 枚 95 → 412 に増えていた（同一入力・同一モデル ID、09-22 → 09-23）。単価は変動するものとして扱う。導入価格は 2026-12-31 まで</li>
+          <li>Lambda の上限緩和（同時実行 10 → 100、メモリ 3GB → 10GB）を申請する。通れば投入の流量制御なしで回り、SpeciesNet は 1 枚 3 秒級になる</li>
+          <li>動物なし画像を SpeciesNet で先に落として Gemini を呼ばない節約（実装済み、評価のため無効化中）を本番で有効にする</li>
+        </ul>
+      </div>
+      <div class="next">
+        <span class="pri">Phase 2 の前に決めること</span>
         <h3>先に方針を決めておくこと</h3>
         <ul>
-          <li>人物写り込み（個人情報）の扱い — 野外カメラには登山者・農作業者が必ず写る</li>
+          <li>人物写り込み（個人情報）の扱い — 野外カメラには登山者・農作業者が必ず写る。SpeciesNet の検出器は人を「human」として検出できるので、その時点で画像を送らない選択肢がある</li>
           <li>クマ通知の SLO（「検知 → 通知 p95 &lt; 2 分」等の用途別定義）</li>
           <li>自治体 / 研究 / 一般のマルチテナント分離</li>
-          <li>推論先を 1 社に依存しない運用（今回の枠の問題が再発しうる）</li>
+          <li>推論先を 1 社に依存しない運用（今回の枠の問題が再発しうる。SpeciesNet 併用はその保険にもなっている）</li>
         </ul>
       </div>
     </div>
@@ -716,7 +812,7 @@
 <footer class="ft">
   <div class="wrap">
     <p class="note">
-      <b>この記録について</b> — 数値はすべて 2026-09-02 〜 09-22 に実施した評価 run の実測値です。画像の取り込み・実行制御・記録は AWS（us-east-1）、推論は当初 Amazon Bedrock 上の <span class="mono">claude-haiku-4-5</span> / <span class="mono">claude-sonnet-5</span>、09-22 以降は Google Cloud Vertex AI 上の <span class="mono">gemini-3.8-flash</span> です。パイプラインは変えず、推論先だけを環境変数で差し替えています。1 枚ごとの推論結果は<a href="gallery.html">判定結果ページ</a>で全件公開しており、集計レポートは非公開の実装リポジトリにアーカイブしています。設計の本体（仕様書・実装コード・Terraform）は別リポジトリでプライベート管理しています。
+      <b>この記録について</b> — 数値はすべて 2026-09-02 〜 09-23 に実施した評価 run の実測値です。画像の取り込み・実行制御・記録は AWS（us-east-1）、推論は当初 Amazon Bedrock 上の <span class="mono">claude-haiku-4-5</span> / <span class="mono">claude-sonnet-5</span>、09-22 以降は Google Cloud Vertex AI 上の <span class="mono">gemini-3.8-flash</span>、09-23 以降はこれに Google の OSS モデル <span class="mono">SpeciesNet v4.0.3a</span>（Apache-2.0、AWS Lambda コンテナで自前実行）を併用しています。パイプラインは変えず、推論先だけを環境変数で差し替えています。1 枚ごとの推論結果は<a href="gallery.html">判定結果ページ</a>で全件公開しており、集計レポートは非公開の実装リポジトリにアーカイブしています。設計の本体（仕様書・実装コード・Terraform）は別リポジトリでプライベート管理しています。
     </p>
     <p class="note" style="margin-top:14px"><b>画像クレジット</b> — 本ページの評価画像は iNaturalist の CC BY ライセンス写真です。</p>
     <ul>

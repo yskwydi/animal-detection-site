@@ -269,8 +269,8 @@
       <p class="lede" style="margin:1.5rem 0 0;font-size:.96rem">
         <a href="eval.html" style="color:var(--amber);text-decoration:none;border-bottom:1px solid var(--amber);padding-bottom:2px">› Phase 1 の検証結果を見る</a>
         <span style="color:var(--bone-dim)"> ／ </span>
-        <a href="gallery.html" style="color:var(--amber);text-decoration:none;border-bottom:1px solid var(--amber);padding-bottom:2px">› 判定結果 全719枚</a>
-        <span style="color:var(--bone-dim)"> — 実際の評価画像・プロンプト・AI の回答つき。719 枚・12 run の実測（種同定 top-1 0.851 / 目標 0.700、8 基準中 7 達成）</span>
+        <a href="gallery.html" style="color:var(--amber);text-decoration:none;border-bottom:1px solid var(--amber);padding-bottom:2px">› 判定結果 全716枚</a>
+        <span style="color:var(--bone-dim)"> — 実際の評価画像・プロンプト・AI の回答つき。716 枚・17 run の実測。生成 AI（Gemini）と OSS 検出器（SpeciesNet）の併用で<b style="color:var(--bone)">種同定 top-1 0.911 / 目標 0.700、8 基準中 8 達成（Phase 1 GO、2026-09-23）</b></span>
       </p>
     </div>
 
@@ -422,6 +422,7 @@
           <tr><td>バッファ</td><td class="svc">Amazon SQS</td><td>再接続バーストを吸収し、下流の推論呼び出しレートをならす。</td></tr>
           <tr><td>オーケストレーション</td><td class="svc">EventBridge Pipes + Step Functions (Express)</td><td>一次分類→エスカレーションの分岐を宣言的に記述。スロットリングへのbackoffリトライを内蔵し可観測性が高い。</td></tr>
           <tr><td>AI 推論</td><td class="svc">Google Cloud Vertex AI (Gemini)</td><td>アノテーション不要の中核。tool use / JSON Schema で構造化出力しDB投入を確実化。</td></tr>
+          <tr><td>第二の判定器</td><td class="svc">SpeciesNet (Google, Apache-2.0) on Lambda コンテナ</td><td>トレイルカメラ写真で学習済みの OSS 検出・分類モデルを自前実行。生成 AI が「わからない」と言った夜間画像を埋め、2 つの答えの一致を確信度の信号に使う（Phase 1 で実測、top-1 0.846 → 0.911）。</td></tr>
           <tr><td>データベース</td><td class="svc">Amazon DynamoDB</td><td>時系列追記中心のアクセスパターンに合致。GSIは時間軸ミックスでホットパーティション回避。</td></tr>
           <tr><td>通知</td><td class="svc">SNS + FCM / SES</td><td>重要検出のファンアウト。将来の複数ユーザー・自治体宛て購読管理にトピックが効く。</td></tr>
           <tr><td>API / 閲覧</td><td class="svc">API Gateway HTTP API + S3/CloudFront</td><td>Terraform記述が軽くPoC向き。Amplify Gen2(=CDK)は不採用で一貫性を保つ。</td></tr>
@@ -482,8 +483,8 @@
     </div>
     <div class="phases rev">
       <div class="phase"><div class="pn">PHASE 0</div><h4>環境準備</h4><p>AWSアカウント / Terraform初期化（S3 backend）/ 推論モデルのアクセス有効化。</p></div>
-      <div class="phase key"><div class="pn">PHASE 1</div><h4>クラウドのコア検証 <span class="keytag">最重要 / 端末なしで先行</span></h4><p>S3 + SQS + Step Functions + 生成AI + DynamoDB を構築。手元の動物写真をS3に置き、構造化結果がDBに入るかを検証 — 最大リスクを最初に潰す。</p></div>
-      <div class="phase"><div class="pn">PHASE 2</div><h4>エスカレーションと閲覧</h4><p>上位モデルへのエスカレーション分岐を追加。簡易Webビューア（S3/CloudFront/Cognito/API GW）で結果一覧を表示。</p></div>
+      <div class="phase"><div class="pn">PHASE 1</div><h4>クラウドのコア検証 <span class="keytag">完了 / GO（2026-09-23）</span></h4><p>S3 + SQS + Step Functions + 生成AI + DynamoDB を構築し、ラベル付き写真 716 枚で 17 run を実測。生成 AI 単独では 8 基準中 7 で止まり、OSS 検出器 SpeciesNet の併用で 8 基準すべてを達成（<a href="eval.html" style="color:var(--amber)">検証の記録</a>）。</p></div>
+      <div class="phase key"><div class="pn">PHASE 2</div><h4>エスカレーションと閲覧 <span class="keytag">次の段階</span></h4><p>2 つの判定器が割れた「保留」13〜29% を上位モデルと人へ流す分岐を追加。簡易Webビューア（S3/CloudFront/Cognito/API GW）で結果一覧と保留の確定操作。並行して国内トレイルカメラ画像での再評価。</p></div>
       <div class="phase"><div class="pn">PHASE 3</div><h4>Android エッジ最小実装</h4><p>CameraX＋動体検知＋ローカルキュー＋S3アップロードで「撮影→S3→分類→閲覧」をE2E検証。</p></div>
       <div class="phase"><div class="pn">PHASE 4</div><h4>同期・電源の堅牢化</h4><p>store-and-forwardのオフライン耐性、WorkManager制約、照度ゲート/Duty Cycle/Thermal適応/Doze戦略Aを実機で詰める。</p></div>
       <div class="phase"><div class="pn">PHASE 5</div><h4>評価</h4><p>既知ラベルで精度・コスト・レイテンシを計測し、提案書に数値で反映する。</p></div>
@@ -500,19 +501,20 @@
       <p>前提例：1台・検出トリガ100回/日・各1キーフレームを一次分類へ。</p>
     </div>
     <div class="cost-grid rev">
-      <div class="bignum">数百円<small>〜 千円台 / 月（PoC 1〜数台のオーダー）</small></div>
+      <div class="bignum">約 1,300 円<small> / 月（1 台・100 トリガ/日、Phase 1 の実測単価 1 枚 ≈ $0.003 で換算）</small></div>
       <div class="scoll">
         <table class="tbl">
           <thead><tr><th>項目</th><th>月間概算</th><th>備考</th></tr></thead>
           <tbody>
-            <tr><td>AI 推論</td><td class="svc">〜3,000回/月</td><td>主変数＝動体検知の精度。無駄トリガを減らすほど安い。</td></tr>
+            <tr><td>AI 推論</td><td class="svc">〜3,000回/月 ≈ $7.7</td><td>Gemini 3.8 Flash 実測 1 枚 $0.0026（09-23）。主変数＝動体検知の精度。無駄トリガを減らすほど安い。</td></tr>
+            <tr><td>SpeciesNet（Lambda 3GB・7 秒）</td><td class="svc">〜3,000回/月 ≈ $1</td><td>1 枚 $0.0003。動物なし画像をここで落とせば生成 AI の呼び出しも減る。</td></tr>
             <tr><td>S3</td><td class="svc">〜600MB</td><td>数円オーダー＋ライフサイクルでGlacier退避。</td></tr>
             <tr><td>その他</td><td class="svc">SQS / Lambda / SFn / DynamoDB / API GW ほか</td><td>PoC規模ではほぼ無料枠内〜数十円。</td></tr>
           </tbody>
         </table>
       </div>
     </div>
-    <p class="note" style="margin-top:22px;color:var(--bone-dim)">※ 生成AIの単価は変動するため、実装時点の最新料金で詳細コストモデルを再算出する（本節は桁感の提示）。</p>
+    <p class="note" style="margin-top:22px;color:var(--bone-dim)">※ 生成AIの単価は変動する（同一モデル ID でも出力トークンが 09-22 → 09-23 で 4 倍に増えた実測がある。導入価格は 2026-12-31 まで）。実装時点の最新料金で詳細コストモデルを再算出する。</p>
   </div>
 </section>
 
