@@ -242,14 +242,14 @@
 
 <div class="wrap head">
   <span class="eyebrow">Phase 1 Evaluation Log ・ 2026-09-02 → 09-22</span>
-  <h1>写真 719 枚を AI に解かせて、<em>どこまで当たるかを測った。</em></h1>
-  <p class="lede">Phase 1 の最大の仮説は「アノテーションなしで、生成 AI が実用精度の種同定をできるか」。クラウド側のパイプラインを組み、ラベル付きの野生動物写真を流し込んで 12 回の評価 run を回しました。実際に投げたプロンプト、実際の画像、AI が返した回答、そして数値をそのまま公開します。<a href="gallery.html">判定結果は 719 枚すべてを 1 枚ずつ公開しています</a>。</p>
+  <h1>写真 716 枚を AI に解かせて、<em>どこまで当たるかを測った。</em></h1>
+  <p class="lede">Phase 1 の最大の仮説は「アノテーションなしで、生成 AI が実用精度の種同定をできるか」。クラウド側のパイプラインを組み、ラベル付きの野生動物写真を流し込んで 12 回の評価 run を回しました。実際に投げたプロンプト、実際の画像、AI が返した回答、そして数値をそのまま公開します。<a href="gallery.html">判定結果は 716 枚すべてを 1 枚ずつ公開しています</a>。</p>
   <span class="verdict">判定: NO-GO（8 基準中 7 達成・残り 1）</span>
   <div class="keys">
-    <div class="key"><span class="v">0.853 <small>/ 目標 0.700</small></span><span class="l">種同定 top-1 accuracy。初回の本評価は 0.515 で、主指標は初めて目標を超えた</span></div>
-    <div class="key"><span class="v">0.683 <small>← 0.160</small></span><span class="l">夜間赤外線画像の top-1。指示文は変えず、推論先を替えただけの差</span></div>
-    <div class="key"><span class="v">7 / 8 <small>基準を達成</small></span><span class="l">残る不合格はツキノワグマ recall 0.724（目標 0.90）の 1 つだけ</span></div>
-    <div class="key"><span class="v">約 $1.85 <small>/ 719 枚</small></span><span class="l">実費。前回の最良 run（$4.10）から 55% 減。1 枚あたり約 0.4 円</span></div>
+    <div class="key"><span class="v">0.857 <small>/ 目標 0.700</small></span><span class="l">種同定 top-1 accuracy。初回の本評価は 0.515 で、主指標は初めて目標を超えた</span></div>
+    <div class="key"><span class="v">0.691 <small>← 0.160</small></span><span class="l">夜間赤外線画像の top-1。指示文は変えず、推論先を替えただけの差</span></div>
+    <div class="key"><span class="v">7 / 8 <small>基準を達成</small></span><span class="l">残る不合格はツキノワグマ recall 0.750（目標 0.90）の 1 つだけ</span></div>
+    <div class="key"><span class="v">約 $1.85 <small>/ 716 枚</small></span><span class="l">実費。前回の最良 run（$4.10）から 55% 減。1 枚あたり約 0.4 円</span></div>
   </div>
 </div>
 
@@ -263,13 +263,13 @@
     <div class="grid2">
       <div class="panel">
         <h3>評価セット（iteration 1 以降）</h3>
-        <div class="kv"><span class="kk">総枚数</span><span class="vv">719 枚（陽性 679 ＋ 陰性 40）</span></div>
-        <div class="kv"><span class="kk">昼 / 夜</span><span class="vv">438 / 281（夜 = 赤外線モノクロ）</span></div>
+        <div class="kv"><span class="kk">総枚数</span><span class="vv">716 枚（陽性 676 ＋ 陰性 40）</span></div>
+        <div class="kv"><span class="kk">昼 / 夜</span><span class="vv">438 / 278（夜 = 赤外線モノクロ）</span></div>
         <div class="kv"><span class="kk">種数</span><span class="vv">14 種 ＋「動物なし」</span></div>
         <div class="kv"><span class="kk">出典</span><span class="vv">iNaturalist（CC0 / CC-BY）</span></div>
         <div class="kv"><span class="kk">前処理</span><span class="vv">長辺 1568px・3.75MB 以下へ縮小</span></div>
-        <div class="kv"><span class="kk">品質管理</span><span class="vv">AI で全件スクリーニングし、別種・死骸・足跡のみ等 81 枚を除外</span></div>
-        <p class="small muted" style="margin-top:12px">重点 4 種の内訳: ニホンザル 89・ツキノワグマ 87・ニホンジカ 84・イノシシ 81。<b>4 種すべてが判定に必要な n≥80 を満たした</b>ため、今回は全種で合否が確定しています（前回はクマ 69・シカ 79 で「判定不能」でした）。</p>
+        <div class="kv"><span class="kk">品質管理</span><span class="vv">AI で全件スクリーニングし、別種・死骸・足跡のみ等 81 枚を除外。さらに目視で正解ラベルの誤り 3 枚を除外</span></div>
+        <p class="small muted" style="margin-top:12px">重点 4 種の内訳: ニホンザル 89・ニホンジカ 84・ツキノワグマ 84・イノシシ 81。<b>4 種すべてが判定に必要な n≥80 を満たした</b>ため、今回は全種で合否が確定しています（前回はクマ 69・シカ 79 で「判定不能」でした）。</p>
       </div>
       <div class="panel">
         <h3>採点のルール</h3>
@@ -355,7 +355,7 @@
     <div class="sec-head">
       <span class="eyebrow">03 ・ 実例</span>
       <h2>同じ写真に、同じ指示。返ってきた答えを並べる。</h2>
-      <p>以下はすべて評価セットの実データです。画像は iNaturalist の CC-BY 写真（撮影者は各画像下に表示）、回答テキストは DynamoDB に記録された <code>species</code> / <code>confidence</code> / <code>notes</code> をそのまま引用しています。<b>同じ写真に同じ指示文を与え、推論先だけを替えた結果</b>を 3 段で並べています。<a href="gallery.html">残り 713 枚も同じ形で公開しています</a>。</p>
+      <p>以下はすべて評価セットの実データです。画像は iNaturalist の CC-BY 写真（撮影者は各画像下に表示）、回答テキストは DynamoDB に記録された <code>species</code> / <code>confidence</code> / <code>notes</code> をそのまま引用しています。<b>同じ写真に同じ指示文を与え、推論先だけを替えた結果</b>を 3 段で並べています。<a href="gallery.html">残り 710 枚も同じ形で公開しています</a>。</p>
     </div>
     <div class="cards">
 
@@ -544,7 +544,7 @@
     <div class="sec-head">
       <span class="eyebrow">04 ・ 結果</span>
       <h2>本評価・パイロット・対照ベンチ、合わせて 12 run。数字はすべて実測です。</h2>
-      <p>full1 / full2 は 722 枚、iteration 1〜2 と gemini1 はスクリーニング後の同一 696 枚、gemini3-base はそこへクマ 18 枚・シカ 5 枚を足した 719 枚。run 間の比較は同じ画像セットどうしで行っています。</p>
+      <p>full1 / full2 は 722 枚、iteration 1〜2 と gemini1 はスクリーニング後の同一 696 枚、gemini3-base はそこへクマ 18 枚・シカ 5 枚を足し、正解ラベルの誤り 3 枚を除いた 716 枚。run 間の比較は同じ画像セットどうしで行っています。</p>
     </div>
 
     <div class="scoll" style="margin-bottom:22px">
@@ -558,7 +558,7 @@
           <tr><td class="mono">iter2-crop</td><td class="n">09-06</td><td class="n">696</td><td>Bedrock / Haiku 4.5</td><td>SpeciesNet で検出 → 切り抜き → 同定（B1）<span class="chip ng">不採用</span></td><td class="n">0.503</td><td class="n">$2.08</td></tr>
           <tr><td class="mono">iter2-night-sonnet</td><td class="n">09-06</td><td class="n">696</td><td>Bedrock / Haiku ＋ 夜 Sonnet 5</td><td>夜だけ上位モデルへ分岐（B6′）<span class="chip ok">有効</span></td><td class="n">0.649</td><td class="n">$4.10</td></tr>
           <tr><td class="mono">gemini1</td><td class="n">09-22</td><td class="n">696</td><td>Vertex AI / Gemini 3.8 Flash</td><td>推論先の移行。<b>指示文は一切変えず</b> <span class="chip ok">有効</span></td><td class="n">0.855</td><td class="n">$0.92</td></tr>
-          <tr><td class="mono">gemini3-base</td><td class="n">09-22</td><td class="n">719</td><td>Vertex AI / Gemini 3.8 Flash</td><td>重点 2 種を増量し、全種で合否を確定させた <span class="chip ok">最新の正式判定</span></td><td class="n"><b>0.853</b></td><td class="n">約 $1.85</td></tr>
+          <tr><td class="mono">gemini3-base</td><td class="n">09-22</td><td class="n">716</td><td>Vertex AI / Gemini 3.8 Flash</td><td>重点 2 種を増量し、全種で合否を確定させた <span class="chip ok">最新の正式判定</span></td><td class="n"><b>0.857</b></td><td class="n">約 $1.85</td></tr>
           <tr><td class="mono">speciesnet</td><td class="n">09-06</td><td class="n">696</td><td>ローカル実行（無料 OSS）</td><td>対照ベンチ</td><td class="n">0.213</td><td class="n">$0</td></tr>
         </tbody>
       </table>
@@ -582,7 +582,7 @@
         <div class="hrow"><div class="lab">SpeciesNet<i>無料 OSS・参考</i></div><div class="track"><i class="g" style="left:25%"></i><i class="g" style="left:50%"></i><i class="g" style="left:75%"></i><i class="conn" style="left:20.2%;width:2.7%"></i><i class="dot d" style="left:20.2%"></i><i class="dot n" style="left:22.9%"></i></div><div class="val">.229 / .202</div></div>
         <div class="hrow ax"><div class="lab"></div><div class="axis"><span style="left:0">0</span><span style="left:25%">0.25</span><span style="left:50%">0.50</span><span style="left:75%">0.75</span><span style="left:100%">1.00</span></div><div class="val"></div></div>
       </div>
-      <p class="fig-n">Haiku 系では昼の top-1 がどの手法でも 0.75〜0.79 で頭打ちでしたが、Gemini に替えると昼が 0.976 まで上がり、夜も 0.687 に届きました。<b>指示文は全 run で同一</b>です。full2 は 722 枚のうち iteration 1 と共通の画像だけで再集計した参考値（昼 362 / 夜 251）。最新の gemini3-base は画像を 719 枚へ増やしたセットなのでこの図には含めていません（昼 0.972 / 夜 0.683 と、ほぼ同じ値です）。</p>
+      <p class="fig-n">Haiku 系では昼の top-1 がどの手法でも 0.75〜0.79 で頭打ちでしたが、Gemini に替えると昼が 0.976 まで上がり、夜も 0.687 に届きました。<b>指示文は全 run で同一</b>です。full2 は 722 枚のうち iteration 1 と共通の画像だけで再集計した参考値（昼 362 / 夜 251）。最新の gemini3-base は画像を 716 枚へ組み替えたセットなのでこの図には含めていません（昼 0.972 / 夜 0.691 と、ほぼ同じ値です）。</p>
     </div>
 
     <div class="grid2">
@@ -590,29 +590,29 @@
         <table class="tbl">
           <thead><tr><th>Go/No-Go 基準</th><th>目標</th><th>full2（初回）</th><th>gemini3-base（最新）</th></tr></thead>
           <tbody>
-            <tr><td>種同定 top-1 accuracy</td><td class="n">0.700</td><td class="n">0.515 <span class="chip ng">✕</span></td><td class="n">0.853 <span class="chip ok">✓</span></td></tr>
+            <tr><td>種同定 top-1 accuracy</td><td class="n">0.700</td><td class="n">0.515 <span class="chip ng">✕</span></td><td class="n">0.857 <span class="chip ok">✓</span></td></tr>
             <tr><td>animal_present precision</td><td class="n">0.900</td><td class="n">1.000 <span class="chip ok">✓</span></td><td class="n">0.999 <span class="chip ok">✓</span></td></tr>
-            <tr><td>animal_present recall</td><td class="n">0.900</td><td class="n">0.931 <span class="chip ok">✓</span></td><td class="n">0.990 <span class="chip ok">✓</span></td></tr>
+            <tr><td>animal_present recall</td><td class="n">0.900</td><td class="n">0.931 <span class="chip ok">✓</span></td><td class="n">0.991 <span class="chip ok">✓</span></td></tr>
             <tr><td>イノシシ recall</td><td class="n">0.800</td><td class="n">0.378 <span class="chip ng">✕</span></td><td class="n">0.938 <span class="chip ok">✓</span></td></tr>
             <tr><td>ニホンジカ recall</td><td class="n">0.800</td><td class="n">0.922 <span class="chip ok">✓</span></td><td class="n">1.000 <span class="chip ok">✓</span></td></tr>
             <tr><td>ニホンザル recall</td><td class="n">0.800</td><td class="n">0.922 <span class="chip ok">✓</span></td><td class="n">1.000 <span class="chip ok">✓</span></td></tr>
-            <tr><td>ツキノワグマ recall</td><td class="n">0.900</td><td class="n">0.303 <span class="chip ng">✕</span></td><td class="n">0.724 <span class="chip ng">✕</span></td></tr>
-            <tr><td>評価データ（陽性）枚数</td><td class="n">500</td><td class="n">682 <span class="chip ok">✓</span></td><td class="n">679 <span class="chip ok">✓</span></td></tr>
+            <tr><td>ツキノワグマ recall</td><td class="n">0.900</td><td class="n">0.303 <span class="chip ng">✕</span></td><td class="n">0.750 <span class="chip ng">✕</span></td></tr>
+            <tr><td>評価データ（陽性）枚数</td><td class="n">500</td><td class="n">682 <span class="chip ok">✓</span></td><td class="n">676 <span class="chip ok">✓</span></td></tr>
           </tbody>
         </table>
       </div>
       <div class="fig">
         <p class="fig-t">AI の自信度は、正解率とよく連動している</p>
         <div class="cols">
-          <div class="col"><span class="cap">.026</span><i class="c" style="height:4px"></i></div>
+          <div class="col"><span class="cap">.027</span><i class="c" style="height:4px"></i></div>
           <div class="col"><span class="cap">.111</span><i class="c" style="height:15px"></i></div>
           <div class="col"><span class="cap">.467</span><i class="c" style="height:63px"></i></div>
           <div class="col"><span class="cap">.520</span><i class="c" style="height:70px"></i></div>
-          <div class="col"><span class="cap">.735</span><i class="c" style="height:99px"></i></div>
-          <div class="col"><span class="cap">.982</span><i class="c" style="height:133px"></i></div>
+          <div class="col"><span class="cap">.742</span><i class="c" style="height:100px"></i></div>
+          <div class="col"><span class="cap">.984</span><i class="c" style="height:133px"></i></div>
         </div>
-        <div class="collabs"><span>0–.5<br>n=38</span><span>.5–.6<br>n=9</span><span>.6–.7<br>n=15</span><span>.7–.8<br>n=25</span><span>.8–.9<br>n=98</span><span>.9–1.0<br>n=494</span></div>
-        <p class="fig-n">run gemini3-base・陽性 679 枚。横軸が <code>confidence</code>、縦がそのビンでの正解率。<b>「自信あり」と言ったときは 98.2% 当たり、「自信がない」と言ったときはほぼ外す</b> — 自己申告の信頼度が素直に当たり外れと連動しています。confidence 0.8 未満はわずか 12.8% で、そこだけ上位モデルへ回す 2 段構成が現実的な選択肢になりました。一方 <code>needs_escalation</code> フラグは Haiku 時代に誤答 331 件のうち 6 件しか拾えず、信号として機能していません。</p>
+        <div class="collabs"><span>0–.5<br>n=37</span><span>.5–.6<br>n=9</span><span>.6–.7<br>n=15</span><span>.7–.8<br>n=25</span><span>.8–.9<br>n=97</span><span>.9–1.0<br>n=493</span></div>
+        <p class="fig-n">run gemini3-base・陽性 676 枚。横軸が <code>confidence</code>、縦がそのビンでの正解率。<b>「自信あり」と言ったときは 98.4% 当たり、「自信がない」と言ったときはほぼ外す</b> — 自己申告の信頼度が素直に当たり外れと連動しています。confidence 0.8 未満はわずか 12.7% で、そこだけ上位モデルへ回す 2 段構成が現実的な選択肢になりました。一方 <code>needs_escalation</code> フラグは Haiku 時代に誤答 331 件のうち 6 件しか拾えず、信号として機能していません。</p>
       </div>
     </div>
   </div>
@@ -652,11 +652,11 @@
       </div>
       <div class="find">
         <h3>「動物がいるか」は既に実用水準。足りないのは「夜のクマが誰か」</h3>
-        <p>animal_present は precision 0.999 / recall 0.984。種同定も 8 基準中 7 つが目標を超え、残るのはツキノワグマ recall 0.724（目標 0.90）だけです。しかもその内訳は<b>昼 0.925 / 夜 0.553</b>で、外した 24 枚のうち 22 枚は別の種と間違えたのではなく「わからない」と答えたもの。クマを他の動物と取り違えた例は 2 件だけで、<b>クマ警報の誤報はゼロ（precision 1.000）</b>です。</p>
+        <p>animal_present は precision 0.999 / recall 0.984。種同定も 8 基準中 7 つが目標を超え、残るのはツキノワグマ recall 0.750（目標 0.90）だけです。しかもその内訳は<b>昼 0.925 / 夜 0.591</b>で、外した 21 枚のうち 19 枚は別の種と間違えたのではなく「わからない」と答えたもの。クマを他の動物と取り違えた例は 2 件だけで、<b>クマ警報の誤報はゼロ（precision 1.000）</b>です。</p>
       </div>
       <div class="find">
         <h3>「わからない」と言える設計が、誤報を出さない側に効いている</h3>
-        <p>候補リストに <code>unknown</code> を入れてあるため、判別できない画像でモデルは無理に当てにいきません。実際 confidence 0.5 未満の回答の正解率は 0.026 で、<b>迷っているときのモデルの答えは当てにならない</b>ことが数字で出ています。運用上は「動物はいるが種は不明」として通知され人が確認するので、取りこぼしにはなりません。ツキノワグマ 87 枚のうち <b>82 枚（94.3%）</b>は種が確定できなくても人の目に届きます。</p>
+        <p>候補リストに <code>unknown</code> を入れてあるため、判別できない画像でモデルは無理に当てにいきません。実際 confidence 0.5 未満の回答の正解率は 0.026 で、<b>迷っているときのモデルの答えは当てにならない</b>ことが数字で出ています。運用上は「動物はいるが種は不明」として通知され人が確認するので、取りこぼしにはなりません。ツキノワグマ 84 枚のうち <b>80 枚（95.2%）</b>は種が確定できなくても人の目に届きます。</p>
       </div>
     </div>
   </div>
@@ -672,11 +672,11 @@
     <div class="nexts">
       <div class="next">
         <span class="pri">PRIORITY 1 ・ 精度</span>
-        <h3>夜のクマ recall 0.553 を 0.90 へ</h3>
-        <p class="small muted">昼は 0.925 で既に目標超え。全体 0.724（95%CI 0.62–0.81）で、上限が目標を下回るため<b>枚数を足しても合格しません</b>。</p>
+        <h3>夜のクマ recall 0.591 を 0.90 へ</h3>
+        <p class="small muted">昼は 0.925 で既に目標超え。全体 0.750（95%CI 0.65–0.83）で、上限が目標を下回るため<b>枚数を足しても合格しません</b>。</p>
         <ul>
           <li>夜だけ上位モデルへ固定（切替の仕組みは実装済み・設定 1 行）</li>
-          <li>confidence 0.8 未満の 12.8% だけを上位モデルへ回す 2 段構成</li>
+          <li>confidence 0.8 未満の 12.7% だけを上位モデルへ回す 2 段構成</li>
           <li>棄権基準を緩める案は、較正データ（自信がないときの正解率 0.026）が否定している</li>
         </ul>
       </div>
@@ -693,10 +693,10 @@
       <div class="next">
         <span class="pri">PRIORITY 2 ・ データ</span>
         <h3>クマの画像はもう増やせない</h3>
-        <p class="small muted">69 → 87 枚まで増やして合否判定は可能になりましたが、日本のツキノワグマは<b>CC0 / CC-BY の在庫が全品質グレードで枯渇</b>しました。</p>
+        <p class="small muted">69 → 84 枚まで増やして合否判定は可能になりましたが、日本のツキノワグマは<b>CC0 / CC-BY の在庫が全品質グレードで枯渇</b>しました。</p>
         <ul>
           <li>カメラトラップ調査を行う大学・自治体からのデータ提供（最初の顧客開拓の入口でもある）</li>
-          <li>ラベルノイズはまだ残る — 「外した」24 枚のうち数枚は、そもそも写っているのがクマではなかった</li>
+          <li>正解ラベルの誤りを 3 枚除外した（動物なし / シカ / 鳥類）。残る候補も目視で確認済み</li>
         </ul>
       </div>
       <div class="next">
